@@ -12,7 +12,8 @@
   "license": "ISC",
   "dependencies": {
     "discord.io": "github:izy521/discord.io",
-    "dotenv": "^10.0.0"
+    "dotenv": "^10.0.0",
+    "ytsr": "^3.5.3"
   },
   "devDependencies": {
     "nodemon": "^2.0.15"
