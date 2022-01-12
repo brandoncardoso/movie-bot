@@ -20,12 +20,15 @@ var client = new Discord.Client({
   autorun: true,
 })
 
+client.setPresence({ game: { name: '!trailer' } })
+
 client.on('ready', () => {
   console.log(`logged in as ${client.username} - ${client.id}`)
-  schedule.scheduleJob('0 * * * *', checkMovieSubreddit)
+  schedule.scheduleJob('0 * * * *', checkMovieSubreddit) // every hour
 })
 
 async function checkMovieSubreddit() {
+  console.log('checking r/movies for new movie trailers...')
   const rMoviesPosts = await reddit
     .getSubreddit('movies')
     .getHot({ limit: 10 }, 'hour')
@@ -39,6 +42,7 @@ async function checkMovieSubreddit() {
       )
     })
     .forEach((post) => {
+      console.log('found a new movie trailer')
       post.upvote()
       broadcastNewTrailer(post)
     })
