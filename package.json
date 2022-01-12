@@ -13,6 +13,7 @@
   "dependencies": {
     "discord.io": "github:izy521/discord.io",
     "dotenv": "^10.0.0",
+    "nedb": "^1.8.0",
     "node-schedule": "^2.1.0",
     "snoowrap": "^1.23.0",
     "ytsr": "^3.5.3"

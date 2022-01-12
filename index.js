@@ -6,7 +6,17 @@ const snoowrap = require('snoowrap')
 
 const COMMAND_PREFIX = '!'
 
-const NewTrailerChannels = []
+const Datastore = require('nedb')
+const trailerChannels = new Datastore({
+  filename: './data/trailer_channels.db',
+  autoload: true,
+})
+
+class Channel {
+  constructor(id) {
+    this.id = id
+  }
+}
 
 const reddit = new snoowrap({
   userAgent: 'node:com.brandoncardoso.movie-trailer-bot:v1.0',
@@ -87,26 +97,43 @@ async function handleTrailerCommand(channelId, arg) {
 }
 
 function registerNewTrailerChannel(channelId) {
-  if (!NewTrailerChannels.find((ntc) => ntc === channelId)) {
-    NewTrailerChannels.push(channelId)
-  }
+  trailerChannels.update(
+    { id: channelId },
+    new Channel(channelId),
+    { upsert: true },
+    (err, numUpdated) => {
+      if (err) {
+        console.error(err)
+        return
+      }
+      console.log(`upserted ${numUpdated} new trailer channel(s): ${channelId}`)
 
-  client.sendMessage({
-    to: channelId,
-    message: 'This channel is now registered to receive new movie trailers!',
-  })
+      client.sendMessage({
+        to: channelId,
+        message:
+          'This channel is now registered to receive new movie trailers!',
+      })
+    }
+  )
 }
 
 function deregisterNewTrailerChannel(channelId) {
-  const index = NewTrailerChannels.indexOf(channelId)
-  if (index >= 0) {
-    NewTrailerChannels.splice(index, 1)
-  }
+  trailerChannels.remove(
+    { id: channelId },
+    { multi: true },
+    (err, numRemoved) => {
+      if (err) {
+        console.error(err)
+        return
+      }
+      console.log(`removed ${numRemoved} trailer channel(s): ${channelId}`)
 
-  client.sendMessage({
-    to: channelId,
-    message: 'This channel will no longer receive new movie trailers.',
-  })
+      client.sendMessage({
+        to: channelId,
+        message: 'This channel will no longer receive new movie trailers.',
+      })
+    }
+  )
 }
 
 function checkMovieSubreddit() {
@@ -131,10 +158,14 @@ function checkMovieSubreddit() {
 }
 
 function broadcastNewTrailer(redditPost) {
-  NewTrailerChannels.forEach((channel) => {
-    client.sendMessage({
-      to: channel,
-      message: redditPost.url,
+  trailerChannels.find({}, (err, channels) => {
+    if (err) console.error(err)
+
+    channels.forEach((channel) => {
+      client.sendMessage({
+        to: channel.id,
+        message: redditPost.url,
+      })
     })
   })
 }
