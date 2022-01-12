@@ -27,42 +27,9 @@ client.on('ready', () => {
   schedule.scheduleJob('0 * * * *', checkMovieSubreddit) // every hour
 })
 
-async function checkMovieSubreddit() {
-  console.log('checking r/movies for new movie trailers...')
-  const rMoviesPosts = await reddit
-    .getSubreddit('movies')
-    .getHot({ limit: 10 }, 'hour')
-    .filter((post) => {
-      const title = post.title?.toLowerCase()
-      const flair = post.link_flair_text?.toLowerCase()
+client.on('disconnect', console.warn)
 
-      return (
-        !post.likes && // use reddit upvotes to track if trailer was seen by bot already
-        (title?.includes('trailer') || flair?.includes('trailer'))
-      )
-    })
-    .forEach((post) => {
-      console.log('found a new movie trailer')
-      post.upvote()
-      broadcastNewTrailer(post)
-    })
-}
-
-function broadcastNewTrailer(redditPost) {
-  const embeddedMessage = {
-    title: redditPost.title,
-    url: 'reddit.com' + redditPost.permalink,
-  }
-
-  NewTrailerChannels.forEach(async (channel) => {
-    client.sendMessage({
-      to: channel,
-      message: redditPost.url,
-    })
-  })
-}
-
-client.on('message', async (user, userId, channelID, message, event) => {
+client.on('message', async (user, userId, channelId, message, event) => {
   if (userId === client.id) return
   if (!message.startsWith(COMMAND_PREFIX)) return
 
@@ -70,18 +37,16 @@ client.on('message', async (user, userId, channelID, message, event) => {
 
   switch (command) {
     case 'trailer':
-      await handleTrailerCommand(channelID, arg)
+      await handleTrailerCommand(channelId, arg)
       break
     case 'registertrailerchannel':
-      registerNewTrailerChannel(channelID)
+      registerNewTrailerChannel(channelId)
       break
     case 'deregistertrailerchannel':
-      deregisterNewTrailerChannel(channelID)
+      deregisterNewTrailerChannel(channelId)
       break
   }
 })
-
-client.on('disconnect', console.warn)
 
 function getCommand(message) {
   const temp = message.slice(COMMAND_PREFIX.length).split(' ')
@@ -101,10 +66,10 @@ async function handleTrailerCommand(channelId, arg) {
     return
   }
 
-  const yts = await YoutubeSearch(`${arg} movie trailer`, {
+  const searchResults = await YoutubeSearch(`${arg} movie trailer`, {
     pages: 1,
   })
-  const trailer = yts.items.find((video) =>
+  const trailer = searchResults.items.find((video) =>
     video?.title?.toLowerCase().includes('trailer')
   )
 
@@ -141,5 +106,35 @@ function deregisterNewTrailerChannel(channelId) {
   client.sendMessage({
     to: channelId,
     message: 'This channel will no longer receive new movie trailers.',
+  })
+}
+
+function checkMovieSubreddit() {
+  console.log('checking r/movies for new movie trailers...')
+  reddit
+    .getSubreddit('movies')
+    .getHot({ limit: 10 })
+    .filter((post) => {
+      const title = post.title?.toLowerCase()
+      const flair = post.link_flair_text?.toLowerCase()
+
+      return (
+        !post.likes && // use reddit upvotes to track if trailer was seen by bot already
+        (title?.includes('trailer') || flair?.includes('trailer'))
+      )
+    })
+    .forEach((post) => {
+      console.log('found a new movie trailer')
+      post.upvote()
+      broadcastNewTrailer(post)
+    })
+}
+
+function broadcastNewTrailer(redditPost) {
+  NewTrailerChannels.forEach((channel) => {
+    client.sendMessage({
+      to: channel,
+      message: redditPost.url,
+    })
   })
 }
