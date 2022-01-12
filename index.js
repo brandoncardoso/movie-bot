@@ -34,7 +34,7 @@ async function checkMovieSubreddit() {
       const flair = post.link_flair_text?.toLowerCase()
 
       return (
-        !post.liked && // use reddit upvotes to track if trailer was seen by bot already
+        !post.likes && // use reddit upvotes to track if trailer was seen by bot already
         (title?.includes('trailer') || flair?.includes('trailer'))
       )
     })
