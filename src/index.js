@@ -28,7 +28,13 @@ client.once('ready', () => {
   console.log(`logged in as ${client.user.tag}`)
   client.user.setActivity('new movie trailers', { type: 'WATCHING' })
 
-  schedule.scheduleJob('0 * * * *', checkForNewTrailers) // every hour
+  schedule.scheduleJob('0 * * * *', () =>
+    checkForNewTrailers({ postLimit: 10 })
+  ) // every hour
+
+  if (process.env.NODE_ENV === 'dev') {
+    checkForNewTrailers({ postLimit: 20, all: true })
+  }
 })
 
 client.on('interactionCreate', async (interaction) => {
@@ -47,21 +53,24 @@ client.on('interactionCreate', async (interaction) => {
   }
 })
 
+client.on('channelDelete', (channel) => {
+  ChannelRepo.removeChannel(channel.id)
+})
+
 client.login(process.env.DISCORD_TOKEN)
 
-function checkForNewTrailers() {
+function checkForNewTrailers({ postLimit, all = false }) {
   console.log('checking r/movies for new movie trailers...')
-  const postsLimit = 10
 
   reddit
     .getSubreddit('movies')
-    .getHot({ limit: postsLimit })
+    .getHot({ limit: postLimit })
     .filter((post) => {
       const title = post.title?.toLowerCase()
       const flair = post.link_flair_text?.toLowerCase()
 
       return (
-        !post.likes && // use reddit upvotes to track if trailer was seen by bot already
+        (all || !post.likes) && // use reddit upvotes to track if trailer was seen by bot already
         (title?.includes('trailer') || flair?.includes('trailer'))
       )
     })
@@ -78,7 +87,7 @@ function broadcastToSubscribedChannels(content) {
       channels.forEach(async ({ id }) => {
         client.channels.cache
           .get(id)
-          .send(content)
+          ?.send(content)
           .then((msg) => {
             msg.react('👍')
             msg.react('👎')
