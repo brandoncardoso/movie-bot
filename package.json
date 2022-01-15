@@ -1,19 +1,23 @@
 {
   "name": "trailer-bot",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js",
-    "start:dev": "nodemon index.js"
+    "start": "node src/index.js",
+    "start:dev": "nodemon src/index.js",
+    "deployCommands": "node src/deploy-commands.js"
   },
   "author": "Brandon Cardoso",
   "license": "ISC",
   "dependencies": {
-    "discord.io": "github:izy521/discord.io",
+    "@discordjs/builders": "^0.11.0",
+    "@discordjs/rest": "^0.2.0-canary.0",
+    "discord-api-types": "^0.26.1",
+    "discord.js": "^13.6.0",
     "dotenv": "^10.0.0",
-    "nedb": "^1.8.0",
+    "nedb-promises": "^5.0.3",
     "node-schedule": "^2.1.0",
     "snoowrap": "^1.23.0",
     "ytsr": "^3.5.3"
