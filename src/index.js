@@ -72,12 +72,18 @@ function checkForNewTrailers() {
     })
 }
 
-function broadcastToSubscribedChannels(message) {
+function broadcastToSubscribedChannels(content) {
   ChannelRepo.getAllChannels()
     .then((channels) => {
-      channels.forEach(({ id }) => {
-        const channel = client.channels.cache.get(id)
-        channel.send(message)
+      channels.forEach(async ({ id }) => {
+        client.channels.cache
+          .get(id)
+          .send(content)
+          .then((msg) => {
+            msg.react('👍')
+            msg.react('👎')
+          })
+          .catch(console.error)
       })
     })
     .catch(console.error)
