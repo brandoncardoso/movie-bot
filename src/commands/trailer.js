@@ -27,8 +27,12 @@ module.exports = {
 }
 
 async function getTrailer(movieName) {
-  const searchResults = await YoutubeSearch(`${movieName} movie trailer`, {
-    pages: 0,
+  const filter = await YoutubeSearch.getFilters(
+    `${movieName} movie trailer`
+  ).then((f) => f.get('Type').get('Video'))
+
+  const searchResults = await YoutubeSearch(filter.url, {
+    pages: 1,
   })
 
   return searchResults.items.find((video) =>
