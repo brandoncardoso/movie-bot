@@ -66,12 +66,9 @@ function checkForNewTrailers({ postLimit, all = false }) {
     .getSubreddit('movies')
     .getHot({ limit: postLimit })
     .filter((post) => {
-      const title = post.title?.toLowerCase()
-      const flair = post.link_flair_text?.toLowerCase()
-
       return (
         (all || !post.likes) && // use reddit upvotes to track if trailer was seen by bot already
-        (title?.includes('trailer') || flair?.includes('trailer'))
+        isTrailer(post)
       )
     })
     .forEach((post) => {
@@ -79,6 +76,17 @@ function checkForNewTrailers({ postLimit, all = false }) {
       post.upvote()
       broadcastToSubscribedChannels(post.url)
     })
+}
+
+function isTrailer(post) {
+  const title = post.title?.toLowerCase()
+  const flair = post.link_flair_text?.toLowerCase()
+
+  return (
+    post.domain === 'youtube.com' &&
+    post.post_hint === 'rich:video' &&
+    (title?.includes('trailer') || flair?.includes('trailer'))
+  )
 }
 
 function broadcastToSubscribedChannels(content) {
