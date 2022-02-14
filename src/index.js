@@ -83,7 +83,7 @@ function isTrailer(post) {
   const flair = post.link_flair_text?.toLowerCase()
 
   return (
-    post.domain === 'youtube.com' &&
+    (post.domain === 'youtube.com' || post.domain === 'youtu.be') &&
     post.post_hint === 'rich:video' &&
     (title?.includes('trailer') || flair?.includes('trailer'))
   )
