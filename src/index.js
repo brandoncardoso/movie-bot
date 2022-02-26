@@ -29,7 +29,7 @@ client.once('ready', () => {
   client.user.setActivity('new movie trailers', { type: 'WATCHING' })
 
   schedule.scheduleJob('0 * * * *', () =>
-    checkForNewTrailers({ postLimit: 10 })
+    checkForNewTrailers({ postLimit: 5 })
   ) // every hour
 
   if (process.env.NODE_ENV === 'dev') {
