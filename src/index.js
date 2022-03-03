@@ -3,6 +3,8 @@ const fs = require('fs')
 const { Client, Intents, Collection } = require('discord.js')
 const snoowrap = require('snoowrap')
 const schedule = require('node-schedule')
+const ytdl = require('ytdl-core')
+
 const ChannelRepo = require('./channel-repo')
 
 const reddit = new snoowrap({
@@ -28,9 +30,7 @@ client.once('ready', () => {
   console.log(`logged in as ${client.user.tag}`)
   client.user.setActivity('new movie trailers', { type: 'WATCHING' })
 
-  schedule.scheduleJob('0 * * * *', () =>
-    checkForNewTrailers({ postLimit: 5 })
-  ) // every hour
+  schedule.scheduleJob('0 * * * *', () => checkForNewTrailers({ postLimit: 5 })) // every hour
 
   if (process.env.NODE_ENV === 'dev') {
     checkForNewTrailers({ postLimit: 20, all: true })
@@ -65,12 +65,11 @@ function checkForNewTrailers({ postLimit, all = false }) {
   reddit
     .getSubreddit('movies')
     .getHot({ limit: postLimit })
-    .filter((post) => {
-      return (
+    .filter(
+      async (post) =>
         (all || !post.likes) && // use reddit upvotes to track if trailer was seen by bot already
-        isTrailer(post)
-      )
-    })
+        isMovieTrailer(post)
+    )
     .forEach((post) => {
       console.log('found a new movie trailer')
       post.upvote()
@@ -78,15 +77,30 @@ function checkForNewTrailers({ postLimit, all = false }) {
     })
 }
 
-function isTrailer(post) {
-  const title = post.title?.toLowerCase()
-  const flair = post.link_flair_text?.toLowerCase()
+async function isMovieTrailer(post) {
+  let isMovieTrailer = false
 
-  return (
-    (post.domain === 'youtube.com' || post.domain === 'youtu.be') &&
-    post.post_hint === 'rich:video' &&
-    (title?.includes('trailer') || flair?.includes('trailer'))
-  )
+  const postTitle = post.title?.toLowerCase()
+  const postFlair = post.link_flair_text?.toLowerCase()
+
+  if (
+    isYoutubeDomain(post.domain) &&
+    (postTitle?.includes('trailer') || postFlair?.includes('trailer'))
+  ) {
+    const videoInfo = await getYoutubeVideoInfo(post.url)
+    isMovieTrailer = videoInfo?.title.toLowerCase().includes('trailer')
+  }
+
+  return isMovieTrailer
+}
+
+function isYoutubeDomain(domain) {
+  return domain === 'youtube.com' || domain === 'youtu.be'
+}
+
+async function getYoutubeVideoInfo(url) {
+  const videoInfo = await ytdl.getInfo(url)
+  return videoInfo?.videoDetails
 }
 
 function broadcastToSubscribedChannels(content) {

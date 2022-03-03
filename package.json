@@ -20,6 +20,7 @@
     "nedb-promises": "^5.0.3",
     "node-schedule": "^2.1.0",
     "snoowrap": "^1.23.0",
+    "ytdl-core": "^4.10.1",
     "ytsr": "^3.5.3"
   },
   "devDependencies": {
