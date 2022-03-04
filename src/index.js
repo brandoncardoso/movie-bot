@@ -30,10 +30,13 @@ client.once('ready', () => {
   console.log(`logged in as ${client.user.tag}`)
   client.user.setActivity('new movie trailers', { type: 'WATCHING' })
 
-  schedule.scheduleJob('0 * * * *', () => checkForNewTrailers({ postLimit: 5 })) // every hour
+  schedule.scheduleJob(
+    '0 * * * *', // every hour
+    () => getNewTrailers({ postLimit: 10 })
+  )
 
   if (process.env.NODE_ENV === 'dev') {
-    checkForNewTrailers({ postLimit: 20, all: true })
+    getNewTrailers({ postLimit: 20, repostSeen: true })
   }
 })
 
@@ -59,7 +62,12 @@ client.on('channelDelete', (channel) => {
 
 client.login(process.env.DISCORD_TOKEN)
 
-function checkForNewTrailers({ postLimit, all = false }) {
+function getNewTrailers({
+  postLimit, // number of top hot posts on r/movies to check
+  scoreThreshold = 300, // only trailers that have `scoreThreshold` more upvotes than downvotes
+  repostSeen = false, // whether to repost trailers that have been seen before
+}) {
+  const startTime = performance.now()
   console.log('checking r/movies for new movie trailers...')
 
   reddit
@@ -67,13 +75,27 @@ function checkForNewTrailers({ postLimit, all = false }) {
     .getHot({ limit: postLimit })
     .filter(
       async (post) =>
-        (all || !post.likes) && // use reddit upvotes to track if trailer was seen by bot already
-        isMovieTrailer(post)
+        (repostSeen || !post.likes) && // use upvotes to track if trailer was seen by bot already, always post during dev
+        post.score >= scoreThreshold &&
+        (await isMovieTrailer(post))
     )
     .forEach((post) => {
       console.log('found a new movie trailer')
-      post.upvote()
+
+      // do not upvote trailers on dev
+      if (process.env.NODE_ENV !== 'dev') {
+        post.upvote()
+      }
+
       broadcastToSubscribedChannels(post.url)
+    })
+    .finally(() => {
+      const endTime = performance.now()
+      console.log(
+        `done checking for new movie trailers (took ${Math.round(
+          endTime - startTime
+        )}ms)`
+      )
     })
 }
 
