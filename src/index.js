@@ -7,6 +7,8 @@ const ytdl = require('ytdl-core')
 
 const ChannelRepo = require('./channel-repo')
 
+const trailerKeywords = ['trailer', 'teaser']
+
 const reddit = new snoowrap({
   userAgent: 'node:com.brandoncardoso.movie-trailer-bot:v1.1',
   clientId: process.env.REDDIT_API_CLIENTID,
@@ -102,18 +104,23 @@ function getNewTrailers({
 async function isMovieTrailer(post) {
   let isMovieTrailer = false
 
-  const postTitle = post.title?.toLowerCase()
-  const postFlair = post.link_flair_text?.toLowerCase()
-
   if (
     isYoutubeDomain(post.domain) &&
-    (postTitle?.includes('trailer') || postFlair?.includes('trailer'))
+    (containsTrailerKeyword(post.title) ||
+      containsTrailerKeyword(post.link_flair_text))
   ) {
     const videoInfo = await getYoutubeVideoInfo(post.url)
-    isMovieTrailer = videoInfo?.title.toLowerCase().includes('trailer')
+    isMovieTrailer = containsTrailerKeyword(videoInfo?.title)
   }
 
   return isMovieTrailer
+}
+
+function containsTrailerKeyword(string) {
+  const lowercase = string?.toLowerCase()
+  return (
+    lowercase && trailerKeywords.some((keyword) => lowercase.includes(keyword))
+  )
 }
 
 function isYoutubeDomain(domain) {
