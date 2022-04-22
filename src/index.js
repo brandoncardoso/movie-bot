@@ -5,7 +5,8 @@ const snoowrap = require('snoowrap')
 const schedule = require('node-schedule')
 const ytdl = require('ytdl-core')
 
-const ChannelRepo = require('./channel-repo')
+const ChannelRepo = require('./repos/channel-repo')
+const TrailerRepo = require('./repos/trailer-repo')
 
 const trailerKeywords = ['trailer', 'teaser']
 
@@ -38,7 +39,7 @@ client.once('ready', () => {
   )
 
   if (process.env.NODE_ENV === 'dev') {
-    getNewTrailers({ postLimit: 20, repostSeen: true })
+    getNewTrailers({ postLimit: 30, repostSeen: true, scoreThreshold: 0 })
   }
 })
 
@@ -64,6 +65,10 @@ client.on('channelDelete', (channel) => {
 
 client.login(process.env.DISCORD_TOKEN)
 
+function getRedditPosts({ subreddit = 'movies', postLimit }) {
+  return reddit.getSubreddit(subreddit).getHot({ limit: postLimit })
+}
+
 function getNewTrailers({
   postLimit, // number of top hot posts on r/movies to check
   scoreThreshold = 300, // only trailers that have `scoreThreshold` more upvotes than downvotes
@@ -72,24 +77,20 @@ function getNewTrailers({
   const startTime = performance.now()
   console.log('checking r/movies for new movie trailers...')
 
-  reddit
-    .getSubreddit('movies')
-    .getHot({ limit: postLimit })
-    .filter(
-      async (post) =>
-        (repostSeen || !post.likes) && // use upvotes to track if trailer was seen by bot already, always post during dev
-        post.score >= scoreThreshold &&
-        (await isMovieTrailer(post))
-    )
-    .forEach((post) => {
+  const redditPosts = getRedditPosts({ postLimit })
+
+  redditPosts
+    .filter(isMovieTrailer)
+    .map(({ url }) => ytdl.getVideoID(url))
+    .filter(async (videoId) => {
+      return repostSeen || (await TrailerRepo.getTrailer(videoId)) === null
+    })
+    .forEach(async (videoId) => {
       console.log('found a new movie trailer')
-
-      // do not upvote trailers on dev
-      if (process.env.NODE_ENV !== 'dev') {
-        post.upvote()
-      }
-
-      broadcastToSubscribedChannels(post.url)
+      await TrailerRepo.addTrailer(videoId)
+      broadcastToSubscribedChannels(
+        `https://www.youtube.com/watch?v=${videoId}`
+      )
     })
     .finally(() => {
       const endTime = performance.now()
@@ -102,18 +103,11 @@ function getNewTrailers({
 }
 
 async function isMovieTrailer(post) {
-  let isMovieTrailer = false
-
-  if (
+  return (
     isYoutubeDomain(post.domain) &&
     (containsTrailerKeyword(post.title) ||
       containsTrailerKeyword(post.link_flair_text))
-  ) {
-    const videoInfo = await getYoutubeVideoInfo(post.url)
-    isMovieTrailer = containsTrailerKeyword(videoInfo?.title)
-  }
-
-  return isMovieTrailer
+  )
 }
 
 function containsTrailerKeyword(string) {

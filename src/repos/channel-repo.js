@@ -29,7 +29,7 @@ function getAllChannels() {
 }
 
 function getChannel(channelId) {
-  return channels.find({ id: channelId })
+  return channels.findOne({ id: channelId })
 }
 
 module.exports = {
