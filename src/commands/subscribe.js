@@ -1,6 +1,6 @@
 const { SlashCommandBuilder } = require('@discordjs/builders')
 const { Permissions } = require('discord.js')
-const ChannelRepo = require('../channel-repo')
+const ChannelRepo = require('../repos/channel-repo')
 
 module.exports = {
   data: new SlashCommandBuilder()
