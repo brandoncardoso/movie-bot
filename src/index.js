@@ -80,7 +80,9 @@ function getNewTrailers({
   const redditPosts = getRedditPosts({ postLimit })
 
   redditPosts
-    .filter(isMovieTrailer)
+    .filter((post) => {
+      return post.score >= scoreThreshold && isMovieTrailer(post)
+    })
     .map(({ url }) => ytdl.getVideoID(url))
     .filter(async (videoId) => {
       return repostSeen || (await TrailerRepo.getTrailer(videoId)) === null
