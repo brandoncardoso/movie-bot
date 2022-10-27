@@ -11,7 +11,7 @@ const TrailerRepo = require('./repos/trailer-repo')
 const trailerKeywords = ['trailer', 'teaser']
 
 const reddit = new snoowrap({
-  userAgent: 'node:com.brandoncardoso.movie-trailer-bot:v1.1',
+  userAgent: process.env.REDDIT_USER_AGENT,
   clientId: process.env.REDDIT_API_CLIENTID,
   clientSecret: process.env.REDDIT_API_SECRET,
   refreshToken: process.env.REDDIT_API_REFRESH_TOKEN,
