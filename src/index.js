@@ -106,7 +106,7 @@ function getNewTrailers({
 
 async function isMovieTrailer(post) {
   return (
-    isYoutubeDomain(post.domain) &&
+    ytdl.validateURL(post.url) &&
     (containsTrailerKeyword(post.title) ||
       containsTrailerKeyword(post.link_flair_text))
   )
@@ -117,10 +117,6 @@ function containsTrailerKeyword(string) {
   return (
     lowercase && trailerKeywords.some((keyword) => lowercase.includes(keyword))
   )
-}
-
-function isYoutubeDomain(domain) {
-  return domain === 'youtube.com' || domain === 'youtu.be'
 }
 
 async function getYoutubeVideoInfo(url) {
