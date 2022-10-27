@@ -1,5 +1,4 @@
-const { SlashCommandBuilder } = require('@discordjs/builders')
-const { Permissions } = require('discord.js')
+const { PermissionFlagsBits, SlashCommandBuilder } = require('discord.js')
 const ChannelRepo = require('../repos/channel-repo')
 
 module.exports = {
@@ -10,7 +9,7 @@ module.exports = {
     ),
   async execute(interaction) {
     const allowed = interaction.memberPermissions.has(
-      Permissions.FLAGS.ADMINISTRATOR || Permissions.FLAGS.MANAGE_GUILD
+      PermissionFlagsBits.Administrator || PermissionFlagsBits.ManageGuild
     )
 
     if (!allowed) {

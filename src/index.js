@@ -1,6 +1,6 @@
 require('dotenv').config()
 const fs = require('fs')
-const { Client, Intents, Collection } = require('discord.js')
+const { Client, GatewayIntentBits, Collection } = require('discord.js')
 const snoowrap = require('snoowrap')
 const schedule = require('node-schedule')
 const ytdl = require('ytdl-core')
@@ -17,7 +17,7 @@ const reddit = new snoowrap({
   refreshToken: process.env.REDDIT_API_REFRESH_TOKEN,
 })
 
-const client = new Client({ intents: Intents.FLAGS.GUILDS })
+const client = new Client({ intents: [GatewayIntentBits.Guilds] })
 
 client.commands = new Collection()
 const commandFiles = fs
