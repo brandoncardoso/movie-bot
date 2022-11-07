@@ -14,15 +14,17 @@
   "dependencies": {
     "discord.js": "^14.6.0",
     "dotenv": "^10.0.0",
+    "got": "~11.8.3",
+    "levenshtein": "^1.0.5",
     "nedb-promises": "^5.0.3",
     "node-schedule": "^2.1.0",
     "snoowrap": "^1.23.0",
-    "ytdl-core": "^4.10.1",
+    "ytdl-core": "^4.11.2",
     "ytsr": "^3.5.3"
   },
   "devDependencies": {
-    "discord-api-types": "^0.26.1",
     "@types/node-schedule": "^2.1.0",
+    "discord-api-types": "^0.26.1",
     "nodemon": "^2.0.20"
   }
 }
