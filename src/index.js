@@ -1,22 +1,21 @@
-require('dotenv').config()
+const dotenv = require('dotenv')
 const fs = require('fs')
 const {
   ActivityType,
   Client,
   Collection,
-  EmbedBuilder,
   GatewayIntentBits,
 } = require('discord.js')
 const snoowrap = require('snoowrap')
 const schedule = require('node-schedule')
 const ytdl = require('ytdl-core')
-const got = require('got')
-const levenshtein = require('levenshtein')
-
+const {
+  createMovieInfoEmbed
+} = require('./helper')
 const ChannelRepo = require('./repos/channel-repo')
 const TrailerRepo = require('./repos/trailer-repo')
 
-const trailerKeywords = ['trailer', 'teaser']
+dotenv.config()
 
 const reddit = new snoowrap({
   userAgent: process.env.REDDIT_USER_AGENT,
@@ -47,7 +46,7 @@ client.once('ready', () => {
   )
 
   if (process.env.NODE_ENV === 'dev') {
-    postNewTrailers({ postLimit: 200, repostSeen: true, scoreThreshold: 0 })
+    postNewTrailers({ postLimit: 100, repostSeen: true, scoreThreshold: 0 })
   }
 })
 
@@ -80,7 +79,7 @@ async function postNewTrailers(options) {
   channels = await Promise.all(channels.map(({ id }) => client.channels.fetch(id)))
 
   for (const trailer of newTrailers) {
-    const embed = await createMovieInfoEmbed(trailer)
+    const embed = await createMovieInfoEmbed(trailer.videoDetails.title)
 
     for (const channel of channels) {
       if (!channel) continue
@@ -91,68 +90,6 @@ async function postNewTrailers(options) {
       embedMessage.react('👎')
     }
   }
-}
-
-async function createMovieInfoEmbed(trailer) {
-  try {
-    const movieInfo = await getMovieInfo(trailer.videoDetails.title)
-
-    return new EmbedBuilder()
-      .setTitle(`${movieInfo.Title} (${movieInfo.Year})`)
-      .setDescription(movieInfo.Plot)
-      .setURL(`https://imdb.com/title/${movieInfo.imdbID}`)
-      .setColor(0xFF0000)
-      .setThumbnail(movieInfo?.Poster)
-      .addFields(
-        { name: 'Genre', value: movieInfo.Genre, inline: true },
-        { name: 'Released', value: movieInfo.Released, inline: true },
-        { name: 'IMDb Rating', value: movieInfo.imdbRating, inline: true },
-      )
-  } catch (e) {
-    console.error(e.message)
-    return new EmbedBuilder()
-      .setFooter({ text: 'Unable to find movie information on IMDb.' })
-  }
-}
-
-async function getMovieInfo(title) {
-  const movieTitle = title.match(/^[^\|\(-]*/)?.[0].trim() // get all text before first '|', '(' or '-'
-  const movieYear = title.match(/\d{4}/)?.[0] || null
-
-  console.log(`searching omdb for ${movieTitle} (${movieYear})...`)
-  const { body } = await got({
-    url: 'http://omdbapi.com',
-    searchParams: {
-      apiKey: process.env.OMDB_API_KEY,
-      s: movieTitle,
-      y: movieYear,
-      type: 'movie',
-    }
-  })
-
-  const result = JSON.parse(body)
-  const closestMatch = result?.Search?.reduce((closest, movie, index) => {
-    if (!closest) {
-      return { index, distance: 999 }
-    } else {
-      const distance = new levenshtein(movieTitle, movie.Title).distance
-      if (distance < closest.distance) {
-        return { index, distance }
-      }
-      return closest
-    }
-  }, null)
-
-  if (!closestMatch) throw new Error(`unable to find movie info for "${movieTitle}"`)
-
-  const movieInfo = await got({
-    url: 'http://omdbapi.com',
-    searchParams: {
-      apiKey: process.env.OMDB_API_KEY,
-      i: result.Search[closestMatch.index]?.imdbID,
-    }
-  })
-  return JSON.parse(movieInfo?.body)
 }
 
 function getRedditPosts({ subreddit = 'movies', postLimit }) {
@@ -199,6 +136,7 @@ async function isMovieTrailer(post) {
 
 function containsTrailerKeyword(string) {
   const lowercase = string?.toLowerCase()
+  const trailerKeywords = ['trailer', 'teaser']
   return (
     lowercase && trailerKeywords.some((keyword) => lowercase.includes(keyword))
   )

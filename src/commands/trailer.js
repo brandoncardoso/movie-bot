@@ -1,5 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js')
 const YoutubeSearch = require('ytsr')
+const { createMovieInfoEmbed } = require('../helper')
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -12,12 +13,15 @@ module.exports = {
         .setRequired(true)
     ),
   async execute(interaction) {
+    await interaction.deferReply();
     const movieName = interaction.options.getString('movie')
-
     const trailer = await getTrailer(movieName)
+    const embed = await createMovieInfoEmbed(trailer.title)
 
     if (trailer?.url) {
-      await interaction.reply(trailer.url)
+      await interaction.editReply(trailer.url)
+      const channel = await interaction.client.channels.cache.find(({id}) => id === interaction.channelId)
+      await channel.send({embeds: [embed]})
     } else {
       await interaction.reply(
         `Sorry, I couldn't find a trailer for "${movieName}".`
