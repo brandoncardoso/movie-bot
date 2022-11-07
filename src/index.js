@@ -1,6 +1,12 @@
 require('dotenv').config()
 const fs = require('fs')
-const { Client, GatewayIntentBits, Collection, EmbedBuilder } = require('discord.js')
+const {
+  ActivityType,
+  Client,
+  Collection,
+  EmbedBuilder,
+  GatewayIntentBits,
+} = require('discord.js')
 const snoowrap = require('snoowrap')
 const schedule = require('node-schedule')
 const ytdl = require('ytdl-core')
@@ -33,7 +39,7 @@ commandFiles.forEach((file) => {
 
 client.once('ready', () => {
   console.log(`logged in as ${client.user.tag}`)
-  client.user.setActivity('new movie trailers', { type: 'WATCHING' })
+  client.user.setActivity('new movie trailers', { type: ActivityType.Watching })
 
   schedule.scheduleJob(
     '0 * * * *', // every hour
