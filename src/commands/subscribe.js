@@ -4,22 +4,10 @@ const ChannelRepo = require('../repos/channel-repo')
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('subscribe')
-    .setDescription(
-      '*Admin only* - Subscribes this channel to automatically receive new movie trailers.'
-    ),
+    .setDescription('Subscribes this channel to automatically receive new movie trailers.')
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator | PermissionFlagsBits.ManageGuild)
+    .setDMPermission(false),
   async execute(interaction) {
-    const allowed = interaction.memberPermissions.has(
-      PermissionFlagsBits.Administrator || PermissionFlagsBits.ManageGuild
-    )
-
-    if (!allowed) {
-      await interaction.reply({
-        content: "Sorry, you don't have permission to use that command.",
-        ephemeral: true,
-      })
-      return
-    }
-
     await ChannelRepo.addChannel(interaction.channelId)
       .then(() => {
         console.log('subscribed channel:', interaction.channelId)
