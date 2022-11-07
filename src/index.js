@@ -203,20 +203,3 @@ function containsTrailerKeyword(string) {
     lowercase && trailerKeywords.some((keyword) => lowercase.includes(keyword))
   )
 }
-
-function broadcastToSubscribedChannels(content) {
-  ChannelRepo.getAllChannels()
-    .then((channels) => {
-      channels.forEach(async ({ id }) => {
-        client.channels.cache
-          .get(id)
-          ?.send(content)
-          .then((msg) => {
-            msg.react('👍')
-            msg.react('👎')
-          })
-          .catch(console.error)
-      })
-    })
-    .catch(console.error)
-}
