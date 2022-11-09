@@ -8,15 +8,10 @@ module.exports = {
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator | PermissionFlagsBits.ManageGuild)
     .setDMPermission(false),
   async execute(interaction) {
+    await interaction.deferReply({ ephemeral: true })
     await ChannelRepo.removeChannel(interaction.channelId)
-      .then(() => {
-        console.log('unsubscribed channel:', interaction.channelId)
-        return interaction.reply({
-          content:
-            'This channel will no longer automatically get new movie trailers.',
-          ephemeral: true,
-        })
-      })
-      .catch(console.error)
+    console.log('channel unsubscribed:', interaction.channelId)
+
+    await interaction.editReply('This channel will no longer automatically get new movie trailers.')
   },
 }
