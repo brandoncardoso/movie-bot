@@ -9,7 +9,7 @@ module.exports = {
     .setDMPermission(false),
   async execute(interaction) {
     await interaction.deferReply({ ephemeral: true })
-    await ChannelRepo.removeChannel(interaction.channelId)
+    await ChannelRepo.unsubscribeChannel(interaction.channelId)
     console.log('channel unsubscribed:', interaction.channelId)
 
     await interaction.editReply('This channel will no longer automatically get new movie trailers.')

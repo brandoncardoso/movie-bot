@@ -75,8 +75,8 @@ client.login(process.env.DISCORD_TOKEN)
 async function postNewTrailers(options) {
   const newTrailers = await getNewTrailers(options)
 
-  let channels = await ChannelRepo.getAllChannels()
-  channels = await Promise.all(channels.map(({ id }) => client.channels.fetch(id)))
+  let channels = await ChannelRepo.getAllSubscribedChannels()
+  channels = await Promise.all(channels.map(({ channelId }) => client.channels.fetch(channelId)))
 
   for (const trailer of newTrailers) {
     const embed = await createMovieInfoEmbed(trailer.videoDetails.title)

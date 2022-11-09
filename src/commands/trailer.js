@@ -19,7 +19,7 @@ module.exports = {
 
     if (trailer?.url) {
       await interaction.reply(trailer.url)
-      const channel = await interaction.client.channels.cache.find(({id}) => id === interaction.channelId)
+      const channel = await interaction.client.channels.cache.find(({ id }) => id === interaction.channelId)
       await channel.send({ embeds: [embed] })
     } else {
       await interaction.reply({
