@@ -1,10 +1,12 @@
 const Datastore = require('nedb-promises')
 
 class Channel {
-  constructor(id) {
+  constructor(id, webhookId, webhookToken) {
     this.channelId = id
-    this.subscribed = true
+    this.webhookId = webhookId
+    this.webhookToken = webhookToken
   }
+
 }
 
 const channels = Datastore.create({
@@ -15,8 +17,8 @@ const channels = Datastore.create({
 
 channels.ensureIndex({ fieldName: 'channelId', unique: true }).catch(console.error)
 
-function addChannel(channelId) {
-  return channels.update({ channelId }, new Channel(channelId), {
+function addChannel(channelId, webhookId, webhookToken) {
+  return channels.update({ channelId }, new Channel(channelId, webhookId, webhookToken), {
     upsert: true,
   })
 }
@@ -34,11 +36,18 @@ function getAllChannels() {
 }
 
 function getAllSubscribedChannels() {
-  return channels.find({ subscribed: true })
+  return channels.find({ webhookId: { $exists: true }})
 }
 
 function unsubscribeChannel(channelId) {
-  return channels.update({ channelId }, { $set: { subscribed: false }})
+  return channels.update({
+    channelId
+  }, {
+    $unset: {
+      webhookId: true,
+      webhookToken: true
+    }
+  })
 }
 
 module.exports = {

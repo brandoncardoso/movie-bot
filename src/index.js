@@ -6,13 +6,11 @@ const {
   Collection,
   Events,
   GatewayIntentBits,
+  WebhookClient,
 } = require('discord.js')
 const snoowrap = require('snoowrap')
 const schedule = require('node-schedule')
 const ytdl = require('ytdl-core')
-const {
-  createMovieInfoEmbed
-} = require('./helper')
 const ChannelRepo = require('./repos/channel-repo')
 const TrailerRepo = require('./repos/trailer-repo')
 
@@ -76,19 +74,21 @@ client.login(process.env.DISCORD_TOKEN)
 async function postNewTrailers(options) {
   const newTrailers = await getNewTrailers(options)
 
-  let channels = await ChannelRepo.getAllSubscribedChannels()
-  channels = await Promise.all(channels.map(({ channelId }) => client.channels.fetch(channelId)))
+  const channels = await ChannelRepo.getAllSubscribedChannels()
 
   for (const trailer of newTrailers) {
-    const embed = await createMovieInfoEmbed(trailer.videoDetails.title)
-
     for (const channel of channels) {
-      if (!channel) continue
-
-      await channel.send(trailer.videoDetails.video_url)
-      const embedMessage = await channel.send({ embeds: [embed] })
-      embedMessage.react('👍')
-      embedMessage.react('👎')
+      try {
+        const webhook = new WebhookClient({ id: channel.webhookId, token: channel.webhookToken })
+        await webhook.send(trailer.videoDetails.video_url)
+      } catch (err) {
+        if (err.code === 10015) { // unknown webhook
+          console.log('webhook not found, unsubscribing channel:', channel.channelId)
+          await ChannelRepo.unsubscribeChannel(channel.channelId)
+        } else {
+          console.error(err)
+        }
+      }
     }
   }
 }
