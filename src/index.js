@@ -4,6 +4,7 @@ const {
   ActivityType,
   Client,
   Collection,
+  Events,
   GatewayIntentBits,
 } = require('discord.js')
 const snoowrap = require('snoowrap')
@@ -36,7 +37,7 @@ commandFiles.forEach((file) => {
   client.commands.set(command.data.name, command)
 })
 
-client.once('ready', () => {
+client.once(Events.ClientReady, () => {
   console.log(`logged in as ${client.user.tag}`)
   client.user.setActivity('new movie trailers', { type: ActivityType.Watching })
 
@@ -50,7 +51,7 @@ client.once('ready', () => {
   }
 })
 
-client.on('interactionCreate', async (interaction) => {
+client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isCommand()) return
 
   const command = client.commands.get(interaction.commandName)
@@ -66,7 +67,7 @@ client.on('interactionCreate', async (interaction) => {
   }
 })
 
-client.on('channelDelete', (channel) => {
+client.on(Events.ChannelDelete, (channel) => {
   ChannelRepo.removeChannel(channel.id)
 })
 
