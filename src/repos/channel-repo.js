@@ -38,7 +38,7 @@ function getAllSubscribedChannels() {
 }
 
 function unsubscribeChannel(channelId) {
-  return channels.update({ channelId }, { subscribed: false })
+  return channels.update({ channelId }, { $set: { subscribed: false }})
 }
 
 module.exports = {
