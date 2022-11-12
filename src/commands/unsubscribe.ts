@@ -1,7 +1,17 @@
-const { PermissionFlagsBits, SlashCommandBuilder, WebhookClient } = require('discord.js')
-const ChannelRepo = require('../repos/channel-repo')
+import {
+	CacheType,
+	Client,
+	CommandInteraction,
+	PermissionFlagsBits,
+	SlashCommandBuilder,
+	WebhookClient,
+} from 'discord.js'
+import { ChannelRepo } from '../repos/index.js'
+import { Command } from './command'
 
-module.exports = {
+const channelRepo = new ChannelRepo()
+
+export const Unsubscribe: Command = {
 	data: new SlashCommandBuilder()
 		.setName('unsubscribe')
 		.setDescription('Unsubscribes this channel from automatically receiving new movie trailers.')
@@ -9,11 +19,11 @@ module.exports = {
 			PermissionFlagsBits.Administrator | PermissionFlagsBits.ManageGuild,
 		)
 		.setDMPermission(false),
-	async execute(interaction) {
+	run: async function (_client: Client, interaction: CommandInteraction<CacheType>): Promise<void> {
 		await interaction.deferReply({ ephemeral: true })
 
 		try {
-			const channel = await ChannelRepo.getChannel(interaction.channelId)
+			const channel = await channelRepo.getChannel(interaction.channelId)
 			const webhook = new WebhookClient({
 				id: channel.webhookId,
 				token: channel.webhookToken,
@@ -28,7 +38,7 @@ module.exports = {
 			}
 		}
 
-		await ChannelRepo.unsubscribeChannel(interaction.channelId)
+		await channelRepo.unsubscribeChannel(interaction.channelId)
 
 		console.log('channel unsubscribed:', interaction.channelId)
 		await interaction.editReply('This channel will no longer automatically get new movie trailers.')

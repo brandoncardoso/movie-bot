@@ -1,8 +1,8 @@
-const { EmbedBuilder } = require('discord.js')
-const got = require('got')
-const levenshtein = require('levenshtein')
+import {EmbedBuilder} from 'discord.js'
+import got from 'got'
+import levenshtein from 'levenshtein'
 
-async function getMovieInfo(title) {
+export async function getMovieInfo(title: string) {
 	const movieTitle = title.match(/^[^\|\(-]*/)?.[0].trim() // get all text before first '|', '(' or '-'
 	const movieYear = title.match(/\d{4}/)?.[0] || null
 
@@ -18,7 +18,7 @@ async function getMovieInfo(title) {
 	})
 
 	const result = JSON.parse(body)
-	const closestMatch = result?.Search?.reduce((closest, movie, index) => {
+	const closestMatch = result?.Search?.reduce((closest: any, movie: any, index: number) => {
 		if (!closest) {
 			return { index, distance: 999 }
 		} else {
@@ -42,7 +42,7 @@ async function getMovieInfo(title) {
 	return JSON.parse(movieInfo?.body)
 }
 
-async function createMovieInfoEmbed(title) {
+export async function createMovieInfoEmbed(title: string) {
 	try {
 		const movieInfo = await getMovieInfo(title)
 
@@ -63,8 +63,4 @@ async function createMovieInfoEmbed(title) {
 			text: 'Unable to find movie information on IMDb.',
 		})
 	}
-}
-
-module.exports = {
-	createMovieInfoEmbed,
 }

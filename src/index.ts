@@ -1,18 +1,10 @@
-const dotenv = require('dotenv')
-const fs = require('fs')
-const {
-	ActivityType,
-	Client,
-	Collection,
-	Events,
-	GatewayIntentBits,
-	WebhookClient,
-} = require('discord.js')
-const snoowrap = require('snoowrap')
-const schedule = require('node-schedule')
-const ytdl = require('ytdl-core')
-const ChannelRepo = require('./repos/channel-repo')
-const TrailerRepo = require('./repos/trailer-repo')
+import dotenv from 'dotenv'
+import { ActivityType, ApplicationCommandManager, Client, Events, GatewayIntentBits, WebhookClient } from 'discord.js'
+import snoowrap, { Listing, Submission } from 'snoowrap'
+import schedule from 'node-schedule'
+import ytdl, { videoInfo } from 'ytdl-core'
+import { Commands } from './commands/index.js'
+import { ChannelRepo, TrailerRepo } from './repos/index.js'
 
 dotenv.config()
 
@@ -25,17 +17,13 @@ const reddit = new snoowrap({
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] })
 
-client.commands = new Collection()
-const commandFiles = fs.readdirSync(`${__dirname}/commands`).filter((file) => file.endsWith('.js'))
+const channelRepo = new ChannelRepo()
+const trailerRepo = new TrailerRepo()
 
-commandFiles.forEach((file) => {
-	const command = require(`${__dirname}/commands/${file}`)
-	client.commands.set(command.data.name, command)
-})
-
-client.once(Events.ClientReady, () => {
-	console.log(`logged in as ${client.user.tag}`)
+client.once(Events.ClientReady, async () => {
+	if (!client.user || !client.application) return
 	client.user.setActivity('new movie trailers', { type: ActivityType.Watching })
+	console.log(`logged in as ${client.user.tag}`)
 
 	schedule.scheduleJob(
 		'0 * * * *', // every hour
@@ -50,11 +38,11 @@ client.once(Events.ClientReady, () => {
 client.on(Events.InteractionCreate, async (interaction) => {
 	if (!interaction.isCommand()) return
 
-	const command = client.commands.get(interaction.commandName)
+	const command = Commands[interaction.commandName]
 	if (!command) return
 
 	try {
-		await command.execute(interaction)
+		await command.run(client, interaction)
 	} catch (error) {
 		console.error(error)
 		await interaction.reply({
@@ -64,15 +52,19 @@ client.on(Events.InteractionCreate, async (interaction) => {
 })
 
 client.on(Events.ChannelDelete, (channel) => {
-	ChannelRepo.removeChannel(channel.id)
+	channelRepo.removeChannel(channel.id)
 })
 
 client.login(process.env.DISCORD_TOKEN)
 
-async function postNewTrailers(options) {
+async function postNewTrailers(options: {
+	postLimit: number
+	repostSeen?: boolean
+	scoreThreshold?: number
+}) {
 	const newTrailers = await getNewTrailers(options)
 
-	const channels = await ChannelRepo.getAllSubscribedChannels()
+	const channels = await channelRepo.getAllSubscribedChannels()
 
 	for (const trailer of newTrailers) {
 		for (const channel of channels) {
@@ -86,7 +78,7 @@ async function postNewTrailers(options) {
 				if (err.code === 10015) {
 					// unknown webhook
 					console.log('webhook not found, unsubscribing channel:', channel.channelId)
-					await ChannelRepo.unsubscribeChannel(channel.channelId)
+					await channelRepo.unsubscribeChannel(channel.channelId)
 				} else {
 					console.error(err)
 				}
@@ -95,7 +87,7 @@ async function postNewTrailers(options) {
 	}
 }
 
-function getRedditPosts({ subreddit = 'movies', postLimit }) {
+async function getRedditPosts({ subreddit = 'movies', postLimit }): Promise<Listing<Submission>> {
 	return reddit.getSubreddit(subreddit).getHot({ limit: postLimit })
 }
 
@@ -103,40 +95,40 @@ async function getNewTrailers({
 	postLimit, // number of top hot posts on r/movies to check
 	scoreThreshold = 300, // only trailers that have `scoreThreshold` more upvotes than downvotes
 	repostSeen = false, // whether to repost trailers that have been seen before
-}) {
+}): Promise<videoInfo[]> {
 	const startTime = performance.now()
 	console.log('getting new movie trailers...')
 
-	const redditPosts = getRedditPosts({ postLimit })
+	const redditPosts = await getRedditPosts({ postLimit })
 
-	const newTrailers = await redditPosts
+	const trailerVideoIds = redditPosts
 		.filter((post) => {
 			return post.score >= scoreThreshold && isMovieTrailer(post)
 		})
 		.map(({ url }) => ytdl.getVideoID(url))
-		.filter(async (videoId) => {
-			return repostSeen || (await TrailerRepo.getTrailer(videoId)) === null
-		})
-		.map(async (videoId) => {
-			await TrailerRepo.addTrailer(videoId)
-			const videoInfo = await ytdl.getBasicInfo(videoId)
-			console.log('new movie trailer:', videoInfo?.videoDetails?.title)
-			return videoInfo
-		})
 
-	const endTime = performance.now()
-	console.log(`done getting new movie trailers (${Math.round(endTime - startTime)}ms)`)
-	return newTrailers
+	const newTrailers = []
+	for (const videoId of trailerVideoIds) {
+		if (repostSeen || (await trailerRepo.getTrailer(videoId)) === null) {
+			newTrailers.push(trailerRepo.addTrailer(videoId).then(() => ytdl.getBasicInfo(videoId)))
+		}
+	}
+
+	return Promise.all(newTrailers).then((newTrailers) => {
+		const endTime = performance.now()
+		console.log(`done getting new movie trailers (${Math.round(endTime - startTime)}ms)`)
+		return newTrailers
+	})
 }
 
-async function isMovieTrailer(post) {
+function isMovieTrailer(post: Submission) {
 	return (
 		ytdl.validateURL(post.url) &&
 		(containsTrailerKeyword(post.title) || containsTrailerKeyword(post.link_flair_text))
 	)
 }
 
-function containsTrailerKeyword(string) {
+function containsTrailerKeyword(string: string) {
 	const lowercase = string?.toLowerCase()
 	const trailerKeywords = ['trailer', 'teaser']
 	return lowercase && trailerKeywords.some((keyword) => lowercase.includes(keyword))

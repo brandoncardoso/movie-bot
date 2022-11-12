@@ -1,7 +1,17 @@
-const { PermissionFlagsBits, SlashCommandBuilder } = require('discord.js')
-const ChannelRepo = require('../repos/channel-repo')
+import {
+	ApplicationCommandType,
+	Client,
+	CommandInteraction,
+	PermissionFlagsBits,
+	SlashCommandBuilder,
+	TextChannel,
+} from 'discord.js'
+import { ChannelRepo } from '../repos/index.js'
+import { Command } from './command'
 
-module.exports = {
+const channelRepo = new ChannelRepo()
+
+export const Subscribe: Command = {
 	data: new SlashCommandBuilder()
 		.setName('subscribe')
 		.setDescription('Subscribes this channel to automatically receive new movie trailers.')
@@ -9,19 +19,20 @@ module.exports = {
 			PermissionFlagsBits.Administrator | PermissionFlagsBits.ManageGuild,
 		)
 		.setDMPermission(false),
-	async execute(interaction) {
+	run: async function (client: Client, interaction: CommandInteraction): Promise<void> {
 		await interaction.deferReply({ ephemeral: true })
-		const channel = await ChannelRepo.getChannel(interaction.channelId)
+		const channel = await channelRepo.getChannel(interaction.channelId)
 
 		if (!channel || !channel.webhookId) {
-			const discordChannel = await interaction.client.channels.cache.find(
-				({ id }) => id === interaction.channelId,
-			)
+			const discordChannel: TextChannel = (await client.channels.fetch(
+				interaction.channelId,
+			)) as TextChannel
+
 			const webhook = await discordChannel.createWebhook({
 				name: process.env.BOT_NAME,
 				avatar: './avatar.png',
 			})
-			await ChannelRepo.addChannel(interaction.channelId, webhook.id, webhook.token)
+			await channelRepo.addChannel(interaction.channelId, webhook.id, webhook.token)
 		}
 
 		console.log('channel subscribed:', interaction.channelId)

@@ -1,14 +1,13 @@
-require('dotenv').config()
-const fs = require('fs')
-const { REST } = require('discord.js')
-const { Routes } = require('discord-api-types/v9')
+import dotenv from 'dotenv'
+import { REST } from 'discord.js'
+import { Routes } from 'discord-api-types/v9'
+import { Commands } from './commands/index.js'
+
+dotenv.config()
 
 const commands = []
 
-const commandFiles = fs.readdirSync(`${__dirname}/commands`).filter((file) => file.endsWith('.js'))
-
-commandFiles.forEach((file) => {
-	const command = require(`${__dirname}/commands/${file}`)
+Object.values(Commands).forEach((command) => {
 	commands.push(command.data.toJSON())
 })
 const rest = new REST({ version: '9' }).setToken(process.env.DISCORD_TOKEN)
