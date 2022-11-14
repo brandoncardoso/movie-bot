@@ -1,10 +1,5 @@
 import { CacheType, Client, CommandInteraction, SlashCommandBuilder, TextChannel } from 'discord.js'
-import {
-	createMovieInfoEmbed,
-	getMovieInfo,
-	getMovieTrailer,
-	getYoutubeTrailer,
-} from '../helper.js'
+import { createMovieInfoEmbed, getMovieInfo, getMovieTrailer } from '../helper.js'
 import { Command } from './command'
 
 const data = new SlashCommandBuilder()
@@ -25,8 +20,7 @@ async function run(client: Client, interaction: CommandInteraction<CacheType>): 
 	if (movieInfo) {
 		await interaction.deferReply()
 
-		const trailer =
-			(await getMovieTrailer(movieInfo)) || (await getYoutubeTrailer(movieInfo.title)) || null
+		const trailer = await getMovieTrailer(movieInfo)
 		const movieInfoEmbed = await createMovieInfoEmbed(movieInfo)
 
 		const discordChannel = (await client.channels.fetch(interaction.channelId)) as TextChannel

@@ -47,6 +47,10 @@ export async function createMovieInfoEmbed(movieInfo: MovieResponse): Promise<Em
 }
 
 export async function getMovieTrailer(movie: MovieResponse): Promise<string | null> {
+	return (await getTMDBTrailer(movie)) || (await getYoutubeTrailer(movie.title)) || null
+}
+
+async function getTMDBTrailer(movie: MovieResponse): Promise<string | null> {
 	console.log(`searching TMDB for '${movie.title}' trailer...`)
 	const { results } = await moviedb.movieVideos(movie.id)
 	const trailer = results?.find(
@@ -57,7 +61,7 @@ export async function getMovieTrailer(movie: MovieResponse): Promise<string | nu
 	return null
 }
 
-export async function getYoutubeTrailer(movieName: string): Promise<string | null> {
+async function getYoutubeTrailer(movieName: string): Promise<string | null> {
 	console.log(`searching youtube for '${movieName}' trailer...`)
 	const filter = await YoutubeSearch.getFilters(`${movieName} movie trailer`).then((f) =>
 		f.get('Type').get('Video'),

@@ -1,10 +1,18 @@
 import dotenv from 'dotenv'
-import { ActivityType, Client, Events, GatewayIntentBits, WebhookClient } from 'discord.js'
+import {
+	ActivityType,
+	Client,
+	Events,
+	GatewayIntentBits,
+	hyperlink,
+	WebhookClient,
+} from 'discord.js'
 import snoowrap, { Listing, Submission } from 'snoowrap'
 import schedule from 'node-schedule'
 import ytdl, { videoInfo } from 'ytdl-core'
 import { Commands } from './commands/index.js'
 import { ChannelRepo, TrailerRepo } from './repos/index.js'
+import { createMovieInfoEmbed, getMovieInfo, getMovieTrailer } from './helper.js'
 
 dotenv.config()
 
@@ -63,17 +71,27 @@ async function postNewTrailers(options: {
 	scoreThreshold?: number
 }) {
 	const newTrailers = await getNewTrailers(options)
-
 	const channels = await channelRepo.getAllSubscribedChannels()
 
 	for (const trailer of newTrailers) {
+		const movieTitle = parseMovieTitle(trailer.videoDetails.title)
+		const movieInfo = await getMovieInfo(movieTitle)
+
+		if (!movieInfo) return
+
+		const movieTrailer = await getMovieTrailer(movieInfo)
+		const movieInfoEmbed = await createMovieInfoEmbed(movieInfo)
+
 		for (const channel of channels) {
 			try {
 				const webhook = new WebhookClient({
 					id: channel.webhookId,
 					token: channel.webhookToken,
 				})
-				await webhook.send(trailer.videoDetails.video_url)
+				if (movieTrailer) {
+					await webhook.send(hyperlink('', movieTrailer)) //empty message, but youtube video embed still appears
+				}
+				await webhook.send({ embeds: [movieInfoEmbed] })
 			} catch (err) {
 				if (err.code === 10015) {
 					// unknown webhook
@@ -102,33 +120,41 @@ async function getNewTrailers({
 	const redditPosts = await getRedditPosts({ postLimit })
 
 	const trailerVideoIds = redditPosts
-		.filter((post) => {
-			return post.score >= scoreThreshold && isMovieTrailer(post)
-		})
+		.filter((post) => post.score >= scoreThreshold && isMovieTrailer(post))
 		.map(({ url }) => ytdl.getVideoID(url))
 
 	const newTrailers = []
 	for (const videoId of trailerVideoIds) {
-		if (repostSeen || (await trailerRepo.getTrailer(videoId)) === null) {
-			newTrailers.push(trailerRepo.addTrailer(videoId).then(() => ytdl.getBasicInfo(videoId)))
+		const seen = await trailerRepo.getTrailer(videoId)
+
+		if (repostSeen || !seen) {
+			const videoInfo = await ytdl.getBasicInfo(videoId)
+
+			if (containsTrailerKeyword(videoInfo.videoDetails.title)) {
+				await trailerRepo.addTrailer(videoId)
+				newTrailers.push(videoInfo)
+			}
 		}
 	}
 
-	return Promise.all(newTrailers).then((newTrailers) => {
-		const endTime = performance.now()
-		console.log(`done getting new movie trailers (${Math.round(endTime - startTime)}ms)`)
-		return newTrailers
-	})
+	const endTime = performance.now()
+	console.log(`done getting new movie trailers (${Math.round(endTime - startTime)}ms)`)
+	return newTrailers
 }
 
-function isMovieTrailer(post: Submission) {
+function parseMovieTitle(string: string): string {
+	// get all text before first '|', '(' or '-'
+	return string.match(/^[^\|\(-]*/)?.[0].trim()
+}
+
+function isMovieTrailer(post: Submission): boolean {
 	return (
 		ytdl.validateURL(post.url) &&
 		(containsTrailerKeyword(post.title) || containsTrailerKeyword(post.link_flair_text))
 	)
 }
 
-function containsTrailerKeyword(string: string) {
+function containsTrailerKeyword(string: string): boolean {
 	const lowercase = string?.toLowerCase()
 	const trailerKeywords = ['trailer', 'teaser']
 	return lowercase && trailerKeywords.some((keyword) => lowercase.includes(keyword))
