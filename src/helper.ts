@@ -18,7 +18,8 @@ export async function getMovieInfo(query: string): Promise<MovieResponse> {
 	const { results } = await moviedb.searchMovie({ query })
 	if (results.length <= 0) throw new Error(`unable to find movie info for "${query}"`)
 
-	return moviedb.movieInfo({ id: results[0].id })
+	const closest = getClosestTitleMatch(query, results)
+	return moviedb.movieInfo({ id: results[closest].id })
 }
 
 export async function createMovieInfoEmbed(title: string): Promise<EmbedBuilder | null> {
