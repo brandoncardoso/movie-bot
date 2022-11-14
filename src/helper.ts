@@ -2,10 +2,16 @@ import dotenv from 'dotenv'
 import { EmbedBuilder } from 'discord.js'
 import levenshtein from 'levenshtein'
 import { MovieDb, MovieResponse } from 'moviedb-promise'
+import YoutubeSearch, { Video } from 'ytsr'
 
 dotenv.config()
 
 const moviedb = new MovieDb(process.env.TMDB_API_KEY)
+
+type Trailer = {
+	title: string
+	url: string
+}
 
 export async function getMovieInfo(query: string): Promise<MovieResponse> {
 	console.log(`searching for ${query}...`)
@@ -42,6 +48,20 @@ export async function createMovieInfoEmbed(title: string): Promise<EmbedBuilder 
 			{ name: 'Released', value: releaseDate.toLocaleString(), inline: true },
 			{ name: 'Score', value: rating, inline: true },
 		)
+}
+
+export async function getYoutubeTrailer(movieName: string): Promise<Trailer> {
+	const filter = await YoutubeSearch.getFilters(`${movieName} movie trailer`).then((f) =>
+		f.get('Type').get('Video'),
+	)
+
+	const searchResults = await YoutubeSearch(filter.url, {
+		pages: 1,
+	})
+
+	return searchResults.items.find((video: Video) =>
+		video?.title?.toLowerCase().includes('trailer'),
+	) as Trailer
 }
 
 function getClosestTitleMatch(title: string, movies: MovieResponse[]): number {

@@ -1,6 +1,5 @@
 import { CacheType, Client, CommandInteraction, SlashCommandBuilder, TextChannel } from 'discord.js'
-import YoutubeSearch, { Video } from 'ytsr'
-import { createMovieInfoEmbed } from '../helper.js'
+import { createMovieInfoEmbed, getYoutubeTrailer } from '../helper.js'
 import { Command } from './command'
 
 export const Trailer: Command = {
@@ -16,7 +15,7 @@ export const Trailer: Command = {
 		.setDMPermission(true),
 	run: async function (client: Client, interaction: CommandInteraction<CacheType>): Promise<void> {
 		const movieName = interaction.options.get('movie').value as string
-		const trailer = await getTrailer(movieName)
+		const trailer = await getYoutubeTrailer(movieName)
 		const embed = await createMovieInfoEmbed(movieName)
 
 		if (trailer?.url) {
@@ -32,23 +31,4 @@ export const Trailer: Command = {
 			})
 		}
 	},
-}
-
-async function getTrailer(movieName: string): Promise<Trailer> {
-	const filter = await YoutubeSearch.getFilters(`${movieName} movie trailer`).then((f) =>
-		f.get('Type').get('Video'),
-	)
-
-	const searchResults = await YoutubeSearch(filter.url, {
-		pages: 1,
-	})
-
-	return searchResults.items.find((video: Video) =>
-		video?.title?.toLowerCase().includes('trailer'),
-	) as Trailer
-}
-
-type Trailer = {
-	title: string
-	url: string
 }
