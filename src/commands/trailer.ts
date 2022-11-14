@@ -1,34 +1,48 @@
 import { CacheType, Client, CommandInteraction, SlashCommandBuilder, TextChannel } from 'discord.js'
-import { createMovieInfoEmbed, getYoutubeTrailer } from '../helper.js'
+import {
+	createMovieInfoEmbed,
+	getMovieInfo,
+	getMovieTrailer,
+	getYoutubeTrailer,
+} from '../helper.js'
 import { Command } from './command'
 
-export const Trailer: Command = {
-	data: new SlashCommandBuilder()
-		.setName('trailer')
-		.setDescription('Searchs youtube for a movie trailer.')
-		.addStringOption((option) =>
-			option
-				.setName('movie')
-				.setDescription('The name of the movie you want the trailer for.')
-				.setRequired(true),
-		)
-		.setDMPermission(true),
-	run: async function (client: Client, interaction: CommandInteraction<CacheType>): Promise<void> {
-		const movieName = interaction.options.get('movie').value as string
-		const trailer = await getYoutubeTrailer(movieName)
-		const embed = await createMovieInfoEmbed(movieName)
+const data = new SlashCommandBuilder()
+	.setName('trailer')
+	.setDescription('Searchs youtube for a movie trailer.')
+	.addStringOption((option) =>
+		option
+			.setName('movie')
+			.setDescription('The name of the movie you want the trailer for.')
+			.setRequired(true),
+	)
+	.setDMPermission(true)
 
-		if (trailer?.url) {
-			await interaction.reply(trailer.url)
-			const discordChannel: TextChannel = (await client.channels.fetch(
-				interaction.channelId,
-			)) as TextChannel
-			await discordChannel.send({ embeds: [embed] })
+async function run(client: Client, interaction: CommandInteraction<CacheType>): Promise<void> {
+	const movieName = interaction.options.get('movie').value as string
+	const movieInfo = await getMovieInfo(movieName)
+
+	if (movieInfo) {
+		await interaction.deferReply()
+
+		const trailer =
+			(await getMovieTrailer(movieInfo)) || (await getYoutubeTrailer(movieInfo.title)) || null
+		const movieInfoEmbed = await createMovieInfoEmbed(movieInfo)
+
+		const discordChannel = (await client.channels.fetch(interaction.channelId)) as TextChannel
+
+		if (trailer) {
+			await interaction.editReply(trailer)
+			await discordChannel.send({ embeds: [movieInfoEmbed] })
 		} else {
-			await interaction.reply({
-				content: `Sorry, I couldn't find a trailer for "${movieName}".`,
-				ephemeral: true,
-			})
+			await interaction.editReply({ embeds: [movieInfoEmbed] })
 		}
-	},
+	} else {
+		await interaction.reply({
+			content: `Sorry, I couldn't find anything for "${movieName}".`,
+			ephemeral: true,
+		})
+	}
 }
+
+export const Trailer: Command = { data, run }

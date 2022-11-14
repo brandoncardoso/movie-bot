@@ -3,27 +3,22 @@ import { EmbedBuilder } from 'discord.js'
 import levenshtein from 'levenshtein'
 import { MovieDb, MovieResponse } from 'moviedb-promise'
 import YoutubeSearch, { Video } from 'ytsr'
+import ytdl from 'ytdl-core'
 
 dotenv.config()
 
 const moviedb = new MovieDb(process.env.TMDB_API_KEY)
 
-type Trailer = {
-	title: string
-	url: string
-}
-
-export async function getMovieInfo(query: string): Promise<MovieResponse> {
-	console.log(`searching for ${query}...`)
+export async function getMovieInfo(query: string): Promise<MovieResponse | null> {
+	console.log(`searching for '${query}'...`)
 	const { results } = await moviedb.searchMovie({ query })
-	if (results.length <= 0) throw new Error(`unable to find movie info for "${query}"`)
+	if (results.length <= 0) return null
 
 	const closest = getClosestTitleMatch(query, results)
 	return moviedb.movieInfo({ id: results[closest].id })
 }
 
-export async function createMovieInfoEmbed(title: string): Promise<EmbedBuilder | null> {
-	const movieInfo = await getMovieInfo(title)
+export async function createMovieInfoEmbed(movieInfo: MovieResponse): Promise<EmbedBuilder | null> {
 	const imdbUrl = movieInfo.imdb_id ? `https://imdb.com/title/${movieInfo.imdb_id}` : null
 	const posterUrl = movieInfo.poster_path
 		? `https://image.tmdb.org/t/p/original/${movieInfo.poster_path}`
@@ -51,18 +46,32 @@ export async function createMovieInfoEmbed(title: string): Promise<EmbedBuilder 
 		)
 }
 
-export async function getYoutubeTrailer(movieName: string): Promise<Trailer> {
+export async function getMovieTrailer(movie: MovieResponse): Promise<string | null> {
+	console.log(`searching TMDB for '${movie.title}' trailer...`)
+	const { results } = await moviedb.movieVideos(movie.id)
+	const trailer = results?.find(
+		(video) => video.official === true && video.type === 'Trailer' && video.site === 'YouTube',
+	)
+	if (trailer?.key && ytdl.validateID(trailer.key)) return `https://youtu.be/${trailer.key}`
+	console.log('trailer not found on TMDB.')
+	return null
+}
+
+export async function getYoutubeTrailer(movieName: string): Promise<string | null> {
+	console.log(`searching youtube for '${movieName}' trailer...`)
 	const filter = await YoutubeSearch.getFilters(`${movieName} movie trailer`).then((f) =>
 		f.get('Type').get('Video'),
 	)
 
-	const searchResults = await YoutubeSearch(filter.url, {
+	const { items } = await YoutubeSearch(filter.url, {
 		pages: 1,
 	})
 
-	return searchResults.items.find((video: Video) =>
+	const trailer = items?.find((video: Video) =>
 		video?.title?.toLowerCase().includes('trailer'),
-	) as Trailer
+	) as Video
+
+	return trailer?.url
 }
 
 function getClosestTitleMatch(title: string, movies: MovieResponse[]): number {
