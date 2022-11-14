@@ -1,12 +1,4 @@
-import {
-	ApplicationCommandOptionData,
-	ApplicationCommandOptionType,
-	CacheType,
-	Client,
-	CommandInteraction,
-	SlashCommandBuilder,
-	TextChannel,
-} from 'discord.js'
+import { CacheType, Client, CommandInteraction, SlashCommandBuilder, TextChannel } from 'discord.js'
 import YoutubeSearch, { Video } from 'ytsr'
 import { createMovieInfoEmbed } from '../helper.js'
 import { Command } from './command'
@@ -25,7 +17,7 @@ export const Trailer: Command = {
 	run: async function (client: Client, interaction: CommandInteraction<CacheType>): Promise<void> {
 		const movieName = interaction.options.get('movie').value as string
 		const trailer = await getTrailer(movieName)
-		const embed = await createMovieInfoEmbed(trailer.title)
+		const embed = await createMovieInfoEmbed(movieName)
 
 		if (trailer?.url) {
 			await interaction.reply(trailer.url)

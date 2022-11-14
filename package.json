@@ -19,8 +19,8 @@
   "dependencies": {
     "discord.js": "^14.6.0",
     "dotenv": "^10.0.0",
-    "got": "~11.8.3",
     "levenshtein": "^1.0.5",
+    "moviedb-promise": "^3.2.1",
     "nedb-promises": "^5.0.3",
     "node-schedule": "^2.1.0",
     "snoowrap": "^1.23.0",

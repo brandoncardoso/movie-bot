@@ -1,5 +1,5 @@
 import dotenv from 'dotenv'
-import { ActivityType, ApplicationCommandManager, Client, Events, GatewayIntentBits, WebhookClient } from 'discord.js'
+import { ActivityType, Client, Events, GatewayIntentBits, WebhookClient } from 'discord.js'
 import snoowrap, { Listing, Submission } from 'snoowrap'
 import schedule from 'node-schedule'
 import ytdl, { videoInfo } from 'ytdl-core'
