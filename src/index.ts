@@ -126,19 +126,25 @@ async function getNewTrailers({
 	const newTrailers = []
 	for (const videoId of trailerVideoIds) {
 		const seen = await trailerRepo.getTrailer(videoId)
+		console.log(`found video '${videoId}' - seen? ${!!seen}`)
 
 		if (repostSeen || !seen) {
-			const videoInfo = await ytdl.getBasicInfo(videoId)
+			try {
+				const videoInfo = await ytdl.getBasicInfo(videoId)
 
-			if (containsTrailerKeyword(videoInfo.videoDetails.title)) {
-				await trailerRepo.addTrailer(videoId)
-				newTrailers.push(videoInfo)
+				if (containsTrailerKeyword(videoInfo.videoDetails.title)) {
+					await trailerRepo.addTrailer(videoId)
+					newTrailers.push(videoInfo)
+				}
+			} catch (err) {
+				console.error(`failed to get video info for '${videoId}'`)
+				console.error(err)
 			}
 		}
 	}
 
 	const endTime = performance.now()
-	console.log(`done getting new movie trailers (${Math.round(endTime - startTime)}ms)`)
+	console.log(`found ${newTrailers.length} new trailers in ${Math.round(endTime - startTime)}ms`)
 	return newTrailers
 }
 
