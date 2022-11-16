@@ -12,7 +12,10 @@ const moviedb = new MovieDb(process.env.TMDB_API_KEY)
 export async function getMovieInfo(query: string): Promise<MovieResponse | null> {
 	console.log(`searching for '${query}'...`)
 	const { results } = await moviedb.searchMovie({ query })
-	if (results.length <= 0) return null
+	if (results.length <= 0) {
+		console.log(`no results found for '${query}'`)
+		return null
+	}
 
 	const closest = getClosestTitleMatch(query, results)
 	return moviedb.movieInfo({ id: results[closest].id })

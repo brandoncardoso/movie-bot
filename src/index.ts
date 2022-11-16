@@ -77,7 +77,7 @@ async function postNewTrailers(options: {
 		const movieTitle = parseMovieTitle(trailer.videoDetails.title)
 		const movieInfo = await getMovieInfo(movieTitle)
 
-		if (!movieInfo) return
+		if (!movieInfo) continue
 
 		const movieTrailer = await getMovieTrailer(movieInfo)
 		const movieInfoEmbed = await createMovieInfoEmbed(movieInfo)
