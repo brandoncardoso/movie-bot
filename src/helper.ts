@@ -1,5 +1,5 @@
 import dotenv from 'dotenv'
-import { EmbedBuilder } from 'discord.js'
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, WebhookCreateMessageOptions } from 'discord.js'
 import levenshtein from 'levenshtein'
 import { MovieDb, MovieResponse } from 'moviedb-promise'
 import YoutubeSearch, { Video } from 'ytsr'
@@ -21,7 +21,10 @@ export async function getMovieInfo(query: string): Promise<MovieResponse | null>
 	return moviedb.movieInfo({ id: results[closest].id })
 }
 
-export async function createMovieInfoEmbed(movieInfo: MovieResponse): Promise<EmbedBuilder | null> {
+export async function getMovieInfoMessage(
+	movieInfo: MovieResponse,
+): Promise<WebhookCreateMessageOptions | null> {
+	const trailer = await getMovieTrailer(movieInfo)
 	const imdbUrl = movieInfo.imdb_id ? `https://imdb.com/title/${movieInfo.imdb_id}` : null
 	const posterUrl = movieInfo.poster_path
 		? `https://image.tmdb.org/t/p/original/${movieInfo.poster_path}`
@@ -36,49 +39,56 @@ export async function createMovieInfoEmbed(movieInfo: MovieResponse): Promise<Em
 		  })
 		: 'N/A'
 
-	return new EmbedBuilder()
+	const embed = new EmbedBuilder()
 		.setTitle(movieInfo.title)
 		.setDescription(movieInfo.overview)
 		.setURL(imdbUrl)
 		.setColor(0xff0000)
-		.setThumbnail(posterUrl)
+		.setImage(posterUrl)
 		.addFields(
 			{ name: 'Genre', value: genres, inline: true },
 			{ name: 'Released', value: releaseDate.toLocaleString(), inline: true },
 			{ name: 'Score', value: rating, inline: true },
 		)
+
+	const actions = new ActionRowBuilder<ButtonBuilder>()
+		.addComponents(
+			new ButtonBuilder()
+				.setLabel('Trailer')
+				.setStyle(ButtonStyle.Link)
+				.setURL(trailer),
+			new ButtonBuilder()
+				.setLabel('IMDb')
+				.setStyle(ButtonStyle.Link)
+				.setURL(imdbUrl),
+			)
+
+	return {
+		embeds: [embed],
+		components: [actions]
+	}
 }
 
 export async function getMovieTrailer(movie: MovieResponse): Promise<string | null> {
-	return (await getTMDBTrailer(movie)) || (await getYoutubeTrailer(movie.title)) || null
+	return (await getTMDBTrailer(movie)) || (await getYoutubeSearch(movie.title)) || null
 }
 
 async function getTMDBTrailer(movie: MovieResponse): Promise<string | null> {
 	console.log(`searching TMDB for '${movie.title}' trailer...`)
 	const { results } = await moviedb.movieVideos(movie.id)
-	const trailer = results?.find(
-		(video) => video.official === true && video.type === 'Trailer' && video.site === 'YouTube',
-	)
+	const trailer = results?.find((video) => video.type === 'Trailer')
 	if (trailer?.key && ytdl.validateID(trailer.key)) return `https://youtu.be/${trailer.key}`
 	console.log('trailer not found on TMDB.')
 	return null
 }
 
-async function getYoutubeTrailer(movieName: string): Promise<string | null> {
-	console.log(`searching youtube for '${movieName}' trailer...`)
+async function getYoutubeSearch(movieName: string): Promise<string | null> {
+	console.log(`creating youtube search link for '${movieName}' trailer...`)
 	const filter = await YoutubeSearch.getFilters(`${movieName} movie trailer`).then((f) =>
 		f.get('Type').get('Video'),
 	)
 
-	const { items } = await YoutubeSearch(filter.url, {
-		pages: 1,
-	})
-
-	const trailer = items?.find((video: Video) =>
-		video?.title?.toLowerCase().includes('trailer'),
-	) as Video
-
-	return trailer?.url
+	return filter.url
 }
 
 function getClosestTitleMatch(title: string, movies: MovieResponse[]): number {

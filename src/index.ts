@@ -4,7 +4,6 @@ import {
 	Client,
 	Events,
 	GatewayIntentBits,
-	hyperlink,
 	WebhookClient,
 } from 'discord.js'
 import snoowrap, { Listing, Submission } from 'snoowrap'
@@ -12,7 +11,7 @@ import schedule from 'node-schedule'
 import ytdl, { videoInfo } from 'ytdl-core'
 import { Commands } from './commands/index.js'
 import { ChannelRepo, TrailerRepo } from './repos/index.js'
-import { createMovieInfoEmbed, getMovieInfo, getMovieTrailer } from './helper.js'
+import { getMovieInfoMessage, getMovieInfo } from './helper.js'
 
 dotenv.config()
 
@@ -79,8 +78,7 @@ async function postNewTrailers(options: {
 
 		if (!movieInfo) continue
 
-		const movieTrailer = await getMovieTrailer(movieInfo)
-		const movieInfoEmbed = await createMovieInfoEmbed(movieInfo)
+		const movieInfoMsg = await getMovieInfoMessage(movieInfo)
 
 		for (const channel of channels) {
 			try {
@@ -88,10 +86,7 @@ async function postNewTrailers(options: {
 					id: channel.webhookId,
 					token: channel.webhookToken,
 				})
-				if (movieTrailer) {
-					await webhook.send(hyperlink('', movieTrailer)) //empty message, but youtube video embed still appears
-				}
-				await webhook.send({ embeds: [movieInfoEmbed] })
+				if (movieInfoMsg) await webhook.send(movieInfoMsg)
 			} catch (err) {
 				if (err.code === 10015) {
 					// unknown webhook
