@@ -1,15 +1,22 @@
 import dotenv from 'dotenv'
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, WebhookCreateMessageOptions } from 'discord.js'
+import {
+	ActionRowBuilder,
+	ButtonBuilder,
+	ButtonStyle,
+	EmbedBuilder,
+	WebhookCreateMessageOptions,
+} from 'discord.js'
 import levenshtein from 'levenshtein'
-import { MovieDb, MovieResponse } from 'moviedb-promise'
-import YoutubeSearch, { Video } from 'ytsr'
-import ytdl from 'ytdl-core'
+import { MovieDb, MovieResponse, VideosResponse } from 'moviedb-promise'
+import YoutubeSearch from 'ytsr'
 
 dotenv.config()
 
 const moviedb = new MovieDb(process.env.TMDB_API_KEY)
 
-export async function getMovieInfo(query: string): Promise<MovieResponse | null> {
+type MovieWithVideosResponse = MovieResponse & { videos: VideosResponse }
+
+export async function getMovieInfo(query: string): Promise<MovieWithVideosResponse | null> {
 	console.log(`searching for '${query}'...`)
 	const { results } = await moviedb.searchMovie({ query })
 	if (results.length <= 0) {
@@ -18,11 +25,12 @@ export async function getMovieInfo(query: string): Promise<MovieResponse | null>
 	}
 
 	const closest = getClosestTitleMatch(query, results)
-	return moviedb.movieInfo({ id: results[closest].id })
+	const info = await moviedb.movieInfo({ id: results[closest].id, append_to_response: 'videos' })
+	return info as MovieWithVideosResponse
 }
 
 export async function getMovieInfoMessage(
-	movieInfo: MovieResponse,
+	movieInfo: MovieWithVideosResponse,
 ): Promise<WebhookCreateMessageOptions | null> {
 	const trailer = await getMovieTrailer(movieInfo)
 	const imdbUrl = movieInfo.imdb_id ? `https://imdb.com/title/${movieInfo.imdb_id}` : null
@@ -51,35 +59,38 @@ export async function getMovieInfoMessage(
 			{ name: 'Score', value: rating, inline: true },
 		)
 
-	const actions = new ActionRowBuilder<ButtonBuilder>()
-		.addComponents(
-			new ButtonBuilder()
-				.setLabel('Trailer')
-				.setStyle(ButtonStyle.Link)
-				.setURL(trailer),
-			new ButtonBuilder()
-				.setLabel('IMDb')
-				.setStyle(ButtonStyle.Link)
-				.setURL(imdbUrl),
-			)
+	const actions = new ActionRowBuilder<ButtonBuilder>().addComponents(
+		new ButtonBuilder().setLabel('Trailer').setStyle(ButtonStyle.Link).setURL(trailer),
+		new ButtonBuilder().setLabel('IMDb').setStyle(ButtonStyle.Link).setURL(imdbUrl),
+	)
 
 	return {
 		embeds: [embed],
-		components: [actions]
+		components: [actions],
 	}
 }
 
-export async function getMovieTrailer(movie: MovieResponse): Promise<string | null> {
-	return (await getTMDBTrailer(movie)) || (await getYoutubeSearch(movie.title)) || null
+export async function getMovieTrailer(movie: MovieWithVideosResponse): Promise<string | null> {
+	return getTMDBTrailer(movie) || (await getYoutubeSearch(movie.title)) || null
 }
 
-async function getTMDBTrailer(movie: MovieResponse): Promise<string | null> {
-	console.log(`searching TMDB for '${movie.title}' trailer...`)
-	const { results } = await moviedb.movieVideos(movie.id)
-	const trailer = results?.find((video) => video.type === 'Trailer')
-	if (trailer?.key && ytdl.validateID(trailer.key)) return `https://youtu.be/${trailer.key}`
-	console.log('trailer not found on TMDB.')
-	return null
+function getTMDBTrailer(movie: MovieWithVideosResponse): string | null {
+	const trailer = movie.videos?.results?.find((video) => video.type === 'Trailer')
+
+	if (!trailer) {
+		console.log('trailer not found on TMDB')
+		return null
+	}
+
+	switch (trailer?.site) {
+		case 'YouTube':
+			return `https://youtu.be/${trailer.key}`
+		case 'Vimeo':
+			return `https://vimeo.com/${trailer.key}`
+		default:
+			console.error('unhandled trailer site:', trailer.site)
+			return null
+	}
 }
 
 async function getYoutubeSearch(movieName: string): Promise<string | null> {
