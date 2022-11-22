@@ -54,15 +54,24 @@ export async function getMovieInfoMessage(
 		.setColor(0xff0000)
 		.setImage(posterUrl)
 		.addFields(
-			{ name: 'Genre', value: genres, inline: true },
+			{ name: 'Genres', value: genres, inline: true },
 			{ name: 'Released', value: releaseDate.toLocaleString(), inline: true },
 			{ name: 'Score', value: rating, inline: true },
 		)
 
-	const actions = new ActionRowBuilder<ButtonBuilder>().addComponents(
-		new ButtonBuilder().setLabel('Trailer').setStyle(ButtonStyle.Link).setURL(trailer),
-		new ButtonBuilder().setLabel('IMDb').setStyle(ButtonStyle.Link).setURL(imdbUrl),
-	)
+	const actions = new ActionRowBuilder<ButtonBuilder>()
+
+	if (trailer) {
+		actions.addComponents(
+			new ButtonBuilder().setLabel('Trailer').setStyle(ButtonStyle.Link).setURL(trailer),
+		)
+	}
+
+	if (imdbUrl) {
+		actions.addComponents(
+			new ButtonBuilder().setLabel('IMDb').setStyle(ButtonStyle.Link).setURL(imdbUrl),
+		)
+	}
 
 	return {
 		embeds: [embed],
