@@ -138,8 +138,8 @@ async function getNewTrailers({
 }
 
 function parseMovieTitle(string: string): string {
-	// get all text before first '|', '(' or '-'
-	return string.match(/^[^\|\(-]*/)?.[0].trim()
+	// get all text before first '|', '(', '-', '–'
+	return string.match(/^[^–\|\(-]*/)?.[0].trim()
 }
 
 function isMovieTrailer(post: Submission): boolean {
