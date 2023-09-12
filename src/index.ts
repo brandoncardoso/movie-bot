@@ -4,8 +4,9 @@ import snoowrap, { Listing, Submission } from 'snoowrap'
 import schedule from 'node-schedule'
 import ytdl, { videoInfo } from 'ytdl-core'
 import { Commands } from './commands/index.js'
-import { ChannelRepo, TrailerRepo } from './repos/index.js'
 import { getMovieInfoMessage, getMovieInfo } from './helper.js'
+import { ChannelRepository } from './channel/channel.repository.js'
+import { TrailerRepository } from './trailer/trailer.repository.js'
 
 dotenv.config()
 
@@ -18,8 +19,8 @@ const reddit = new snoowrap({
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] })
 
-const channelRepo = new ChannelRepo()
-const trailerRepo = new TrailerRepo()
+const channelRepo = new ChannelRepository()
+const trailerRepo = new TrailerRepository()
 
 client.once(Events.ClientReady, async () => {
 	if (!client.user || !client.application) return
@@ -28,11 +29,11 @@ client.once(Events.ClientReady, async () => {
 
 	schedule.scheduleJob(
 		'0 * * * *', // every hour
-		() => postNewTrailers({ postLimit: 10 }),
+		() => postNewTrailers(10),
 	)
 
 	if (process.env.NODE_ENV === 'dev') {
-		await postNewTrailers({ postLimit: 100, repostSeen: true, scoreThreshold: 0 })
+		await postNewTrailers(100, 0, true)
 	}
 })
 
@@ -53,17 +54,13 @@ client.on(Events.InteractionCreate, async (interaction) => {
 })
 
 client.on(Events.ChannelDelete, async (channel) => {
-	await channelRepo.removeChannel(channel.id)
+	await channelRepo.remove(channel.id)
 })
 
 await client.login(process.env.DISCORD_TOKEN)
 
-async function postNewTrailers(options: {
-	postLimit: number
-	repostSeen?: boolean
-	scoreThreshold?: number
-}) {
-	const newTrailers = await getNewTrailers(options)
+async function postNewTrailers(postLimit: number, scoreThreshold?: number, repostSeen?: boolean): Promise<void> {
+	const newTrailers = await getNewTrailers(postLimit, scoreThreshold, repostSeen)
 	const channels = await channelRepo.getAllSubscribedChannels()
 
 	for (const trailer of newTrailers) {
@@ -115,7 +112,7 @@ async function getNewTrailers(
 
 	const newTrailers: videoInfo[] = []
 	for (const videoId of trailerVideoIds) {
-		const seen = await trailerRepo.getTrailer(videoId)
+		const seen = await trailerRepo.get(videoId)
 		console.log(`found video '${videoId}' - seen? ${!!seen}`)
 
 		if (repostSeen || !seen) {
@@ -123,7 +120,7 @@ async function getNewTrailers(
 				const videoInfo = await ytdl.getBasicInfo(videoId)
 
 				if (containsTrailerKeyword(videoInfo.videoDetails.title)) {
-					await trailerRepo.addTrailer(videoId)
+					await trailerRepo.add(videoId)
 					newTrailers.push(videoInfo)
 				}
 			} catch (err) {

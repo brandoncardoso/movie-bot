@@ -5,10 +5,10 @@ import {
 	SlashCommandBuilder,
 	TextChannel,
 } from 'discord.js'
-import { ChannelRepo } from '../repos/index.js'
+import { Channel, ChannelRepository } from '../channel'
 import { Command } from './command'
 
-const channelRepo = new ChannelRepo()
+const channelRepo = new ChannelRepository()
 
 export const Subscribe: Command = {
 	data: new SlashCommandBuilder()
@@ -20,7 +20,7 @@ export const Subscribe: Command = {
 		.setDMPermission(false),
 	run: async function (client: Client, interaction: CommandInteraction): Promise<void> {
 		await interaction.deferReply({ ephemeral: true })
-		const channel = await channelRepo.getChannel(interaction.channelId)
+		const channel = await channelRepo.get(interaction.channelId)
 
 		if (!channel || !channel.webhookId) {
 			const discordChannel: TextChannel = (await client.channels.fetch(
@@ -31,7 +31,8 @@ export const Subscribe: Command = {
 				name: process.env.BOT_NAME,
 				avatar: './avatar.png',
 			})
-			await channelRepo.addChannel(interaction.channelId, webhook.id, webhook.token)
+			const channel = new Channel(interaction.channelId, webhook.id, webhook.token)
+			await channelRepo.add(interaction.channelId, channel)
 		}
 
 		console.log('channel subscribed:', interaction.channelId)

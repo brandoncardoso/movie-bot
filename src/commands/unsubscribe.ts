@@ -6,10 +6,10 @@ import {
 	SlashCommandBuilder,
 	WebhookClient,
 } from 'discord.js'
-import { ChannelRepo } from '../repos/index.js'
+import { ChannelRepository } from '../channel'
 import { Command } from './command'
 
-const channelRepo = new ChannelRepo()
+const channelRepo = new ChannelRepository()
 
 export const Unsubscribe: Command = {
 	data: new SlashCommandBuilder()
@@ -23,7 +23,7 @@ export const Unsubscribe: Command = {
 		await interaction.deferReply({ ephemeral: true })
 
 		try {
-			const channel = await channelRepo.getChannel(interaction.channelId)
+			const channel = await channelRepo.get(interaction.channelId)
 			const webhook = new WebhookClient({
 				id: channel.webhookId,
 				token: channel.webhookToken,

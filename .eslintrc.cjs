@@ -30,6 +30,7 @@ module.exports = {
 		'linebreak-style': ['error', 'unix'],
 		quotes: ['error', 'single'],
 		semi: ['error', 'never'],
-		'@typescript-eslint/typedef': 'error',
+		'object-curly-spacing': ['error', 'always'],
+		'@typescript-eslint/explicit-function-return-type': 'error',
 	},
 }
