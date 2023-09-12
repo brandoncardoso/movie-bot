@@ -32,7 +32,7 @@ client.once(Events.ClientReady, async () => {
 	)
 
 	if (process.env.NODE_ENV === 'dev') {
-		postNewTrailers({ postLimit: 100, repostSeen: true, scoreThreshold: 0 })
+		await postNewTrailers({ postLimit: 100, repostSeen: true, scoreThreshold: 0 })
 	}
 })
 
@@ -52,11 +52,11 @@ client.on(Events.InteractionCreate, async (interaction) => {
 	}
 })
 
-client.on(Events.ChannelDelete, (channel) => {
-	channelRepo.removeChannel(channel.id)
+client.on(Events.ChannelDelete, async (channel) => {
+	await channelRepo.removeChannel(channel.id)
 })
 
-client.login(process.env.DISCORD_TOKEN)
+await client.login(process.env.DISCORD_TOKEN)
 
 async function postNewTrailers(options: {
 	postLimit: number
@@ -82,6 +82,7 @@ async function postNewTrailers(options: {
 				})
 				if (movieInfoMsg) await webhook.send(movieInfoMsg)
 			} catch (err) {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				if (err.code === 10015) {
 					// unknown webhook
 					console.log('webhook not found, unsubscribing channel:', channel.channelId)
@@ -94,25 +95,25 @@ async function postNewTrailers(options: {
 	}
 }
 
-async function getRedditPosts({ subreddit = 'movies', postLimit }): Promise<Listing<Submission>> {
+async function getRedditPosts(postLimit: number = 100, subreddit: string = 'movies'): Promise<Listing<Submission>> {
 	return reddit.getSubreddit(subreddit).getHot({ limit: postLimit })
 }
 
-async function getNewTrailers({
-	postLimit, // number of top hot posts on r/movies to check
+async function getNewTrailers(
+	postLimit: number, // number of top hot posts on r/movies to check
 	scoreThreshold = 300, // only trailers that have `scoreThreshold` more upvotes than downvotes
 	repostSeen = false, // whether to repost trailers that have been seen before
-}): Promise<videoInfo[]> {
+): Promise<videoInfo[]> {
 	const startTime = performance.now()
 	console.log('getting new movie trailers...')
 
-	const redditPosts = await getRedditPosts({ postLimit })
+	const redditPosts = await getRedditPosts(postLimit)
 
 	const trailerVideoIds = redditPosts
 		.filter((post) => post.score >= scoreThreshold && isMovieTrailer(post))
 		.map(({ url }) => ytdl.getVideoID(url))
 
-	const newTrailers = []
+	const newTrailers: videoInfo[] = []
 	for (const videoId of trailerVideoIds) {
 		const seen = await trailerRepo.getTrailer(videoId)
 		console.log(`found video '${videoId}' - seen? ${!!seen}`)
@@ -139,7 +140,7 @@ async function getNewTrailers({
 
 function parseMovieTitle(string: string): string {
 	// get all text before first '|', '(', '-', '–'
-	return string.match(/^[^–\|\(-]*/)?.[0].trim()
+	return string.match(/^[^–|(-]*/)?.[0].trim()
 }
 
 function isMovieTrailer(post: Submission): boolean {

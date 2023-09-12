@@ -30,7 +30,8 @@ export const Unsubscribe: Command = {
 			})
 			await webhook.delete()
 		} catch (err) {
-			if (err.code === 10015) {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			if (err?.code === 10015) {
 				// unknown webhook, already deleted
 				console.log('webhook not found')
 			} else {

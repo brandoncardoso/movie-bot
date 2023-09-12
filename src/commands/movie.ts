@@ -10,7 +10,7 @@ const titleOption = {
 
 const data = new SlashCommandBuilder()
 	.setName('movie')
-	.setDescription("Get's information about a movie.")
+	.setDescription('Get\'s information about a movie.')
 	.addStringOption((option) =>
 		option
 			.setName(titleOption.name)

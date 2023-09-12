@@ -2,7 +2,8 @@
   "compilerOptions": {
     "outDir": "./built",
     "allowJs": true,
-    "target": "es2021",
+    "module": "es2022",
+    "target": "es2022",
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true
   },

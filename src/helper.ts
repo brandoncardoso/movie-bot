@@ -41,10 +41,10 @@ export async function getMovieInfoMessage(
 	const genres = movieInfo.genres?.map(({ name }) => name).join(', ') || 'N/A'
 	const releaseDate = movieInfo.release_date
 		? new Date(movieInfo.release_date).toLocaleDateString('en-US', {
-				day: 'numeric',
-				month: 'short',
-				year: 'numeric',
-		  })
+			day: 'numeric',
+			month: 'short',
+			year: 'numeric',
+		})
 		: 'N/A'
 
 	const embed = new EmbedBuilder()
@@ -92,13 +92,13 @@ function getTMDBTrailer(movie: MovieWithVideosResponse): string | null {
 	}
 
 	switch (trailer?.site) {
-		case 'YouTube':
-			return `https://youtu.be/${trailer.key}`
-		case 'Vimeo':
-			return `https://vimeo.com/${trailer.key}`
-		default:
-			console.error('unhandled trailer site:', trailer.site)
-			return null
+	case 'YouTube':
+		return `https://youtu.be/${trailer.key}`
+	case 'Vimeo':
+		return `https://vimeo.com/${trailer.key}`
+	default:
+		console.error('unhandled trailer site:', trailer.site)
+		return null
 	}
 }
 
