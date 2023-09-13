@@ -1,6 +1,6 @@
-import { Repository } from '../common/repository'
-import { ChannelDatastore } from './channel.datastore'
-import { Channel } from './channel'
+import { Repository } from '../common/repository.js'
+import { ChannelDatastore } from './channel.datastore.js'
+import { Channel } from './channel.js'
 
 export class ChannelRepository implements Repository<Channel> {
 	channels = ChannelDatastore

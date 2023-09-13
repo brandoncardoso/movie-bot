@@ -5,7 +5,7 @@ import {
 	SlashCommandBuilder,
 	TextChannel,
 } from 'discord.js'
-import { Channel, ChannelRepository } from '../channel'
+import { Channel, ChannelRepository } from '../channel/index.js'
 import { Command } from './command'
 
 const channelRepo = new ChannelRepository()

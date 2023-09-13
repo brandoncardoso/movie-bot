@@ -6,7 +6,7 @@ import {
 	SlashCommandBuilder,
 	WebhookClient,
 } from 'discord.js'
-import { ChannelRepository } from '../channel'
+import { ChannelRepository } from '../channel/index.js'
 import { Command } from './command'
 
 const channelRepo = new ChannelRepository()
