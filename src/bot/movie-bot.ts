@@ -19,15 +19,16 @@ export class MovieBot extends Client {
 	}
 
 	private registerEvents(): void {
-		this.once(Events.ClientReady, () => { this.onReady() })
+		this.once(Events.ClientReady, async () => { await this.onReady() })
 		this.on(Events.InteractionCreate, async (interaction: Interaction) => { await this.onInterationCreate(interaction) })
 		this.on(Events.ChannelDelete, async (channel: Channel) => { await this.onChannelDelete(channel) })
 	}
 	
-	private onReady(): void {
+	private async onReady(): Promise<void> {
 		if (!this.user || !this.application) throw new Error('Error during bot login.')
 
-		this.user.setActivity('new movie trailers', { type: ActivityType.Watching })
+		await this.user.setUsername(process.env.BOT_NAME)
+		this.user.setActivity('for new movies...', { type: ActivityType.Watching })
 		console.log(`logged in as ${this.user.tag}`)
 	}
 
