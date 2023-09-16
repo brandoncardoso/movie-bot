@@ -1,13 +1,21 @@
 import { ActivityType, Channel, Client, Events, GatewayIntentBits, Interaction } from 'discord.js'
 import { ChannelRepository } from '../channel/channel.repository.js'
 import { Commands } from '../commands/index.js'
+import { MovieInfo } from '../movie/movie-info.js'
+import { MovieProvider } from '../movie/movie-provider.js'
 
 export class MovieBot extends Client {
 	channelRepo = new ChannelRepository()
+	movieProvider: MovieProvider
 
-	constructor() {
+	constructor(movieProvider: MovieProvider) {
 		super({ intents: [GatewayIntentBits.Guilds] })
+		this.movieProvider = movieProvider
 		this.registerEvents()
+	}
+
+	public findMovie(query:string): Promise<MovieInfo> {
+		return this.movieProvider.findMovie(query)
 	}
 
 	private registerEvents(): void {

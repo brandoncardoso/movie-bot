@@ -1,5 +1,6 @@
-import { CacheType, Client, CommandInteraction, SlashCommandBuilder } from 'discord.js'
-import { getMovieInfoMessage, getMovieInfo } from '../helper.js'
+import { CacheType, CommandInteraction, SlashCommandBuilder } from 'discord.js'
+import { MovieBot } from '../bot/movie-bot.js'
+import { getMovieInfoMessage } from '../helper.js'
 import { Command } from './command'
 
 const titleOption = {
@@ -19,14 +20,13 @@ const data = new SlashCommandBuilder()
 	)
 	.setDMPermission(true)
 
-async function run(_client: Client, interaction: CommandInteraction<CacheType>): Promise<void> {
+async function run(client: MovieBot, interaction: CommandInteraction<CacheType>): Promise<void> {
 	const movieName = interaction.options.get(titleOption.name).value as string
-	const movieInfo = await getMovieInfo(movieName)
+	const movieInfo = await client.findMovie(movieName)
 
 	if (movieInfo) {
-		await interaction.deferReply()
-		const movieInfoMsg = await getMovieInfoMessage(movieInfo)
-		await interaction.editReply(movieInfoMsg)
+		const movieInfoMsg = getMovieInfoMessage(movieInfo)
+		await interaction.reply(movieInfoMsg)
 	} else {
 		await interaction.reply({
 			content: `Sorry, I couldn't find anything for "${movieName}".`,
