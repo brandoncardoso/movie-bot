@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="./avatar.png" width="100" title="hover text" alt="movie trailer bot avatar">
+  <img src="./avatar.png" width="100" title="hover text" alt="movie bot avatar">
 </p>
 
-# Movie Trailer Bot
+# Movie Bot
 Search for movie information, and automatically post popular movies from reddit.com/r/movies to subscribed discord channels.
 
 ## Commands
