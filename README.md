@@ -3,7 +3,7 @@
 </p>
 
 # Movie Bot
-Search for movie information, and automatically post popular movies from reddit.com/r/movies to subscribed discord channels.
+Search for movie information, and automatically post new upcoming movies to subscribed discord channels.
 
 ## Commands
 `/movie <title>` - Get information about a movie (plot summary, genre, release date, IMDb page, trailer, etc.).
