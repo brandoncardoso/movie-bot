@@ -1,15 +1,11 @@
 import {
 	CacheType,
-	Client,
 	CommandInteraction,
 	PermissionFlagsBits,
 	SlashCommandBuilder,
-	WebhookClient,
 } from 'discord.js'
-import { ChannelRepository } from '../channel/index.js'
+import { MovieBot } from '../bot/movie-bot.js'
 import { Command } from './command'
-
-const channelRepo = new ChannelRepository()
 
 export const Unsubscribe: Command = {
 	data: new SlashCommandBuilder()
@@ -19,29 +15,11 @@ export const Unsubscribe: Command = {
 			PermissionFlagsBits.Administrator | PermissionFlagsBits.ManageGuild,
 		)
 		.setDMPermission(false),
-	run: async function (_client: Client, interaction: CommandInteraction<CacheType>): Promise<void> {
-		await interaction.deferReply({ ephemeral: true })
-
-		try {
-			const channel = await channelRepo.get(interaction.channelId)
-			const webhook = new WebhookClient({
-				id: channel.webhookId,
-				token: channel.webhookToken,
-			})
-			await webhook.delete()
-		} catch (err) {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-			if (err?.code === 10015) {
-				// unknown webhook, already deleted
-				console.log('webhook not found')
-			} else {
-				console.error(err)
-			}
-		}
-
-		await channelRepo.unsubscribeChannel(interaction.channelId)
-
-		console.log('channel unsubscribed:', interaction.channelId)
-		await interaction.editReply('This channel will no longer automatically get new movie trailers.')
+	run: async function (client: MovieBot, interaction: CommandInteraction<CacheType>): Promise<void> {
+		await client.unregisterNewMovieChannel(interaction.channelId)
+		await interaction.reply({
+			content: 'This channel will no longer automatically get new movie trailers.',
+			ephemeral: true
+		})
 	},
 }

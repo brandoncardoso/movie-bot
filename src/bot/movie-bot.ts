@@ -1,4 +1,4 @@
-import { ActivityType, Channel, Client, Events, GatewayIntentBits, Interaction } from 'discord.js'
+import { ActivityType, Channel, Client, Events, GatewayIntentBits, Interaction, TextChannel, WebhookClient } from 'discord.js'
 import { ChannelRepository } from '../channel/channel.repository.js'
 import { Commands } from '../commands/index.js'
 import { MovieInfo } from '../movie/movie-info.js'
@@ -16,6 +16,50 @@ export class MovieBot extends Client {
 
 	public findMovie(query:string): Promise<MovieInfo> {
 		return this.movieProvider.findMovie(query)
+	}
+
+	public async registerNewMovieChannel(channelId: string): Promise<void> {
+		const channel = await this.channelRepo.get(channelId)
+
+		if (channel?.webhookId) {
+			console.log(`channel #${channelId} already subscribed`)
+			return
+		}
+
+		const discordChannel = (await this.channels.fetch(channelId)) as TextChannel
+
+		const webhook = await discordChannel.createWebhook({
+			name: process.env.BOT_NAME,
+			avatar: './avatar.png',
+		})
+
+		await this.channelRepo.add(channelId, {
+			channelId,
+			webhookId: webhook.id,
+			webhookToken: webhook.token,
+		})
+		console.log(`channel #${channelId} subscribed to receive upcoming movies`)
+	}
+
+	public async unregisterNewMovieChannel(channelId: string): Promise<void> {
+		try {
+			const { webhookId, webhookToken } = await this.channelRepo.get(channelId)
+			const webhook = new WebhookClient({
+				id: webhookId,
+				token: webhookToken,
+			})
+			await webhook.delete()
+			await this.channelRepo.unsubscribeChannel(channelId)
+			console.log(`channel #${channelId} unsubscribed from receiving upcoming movies`)
+		} catch (err) {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			if (err?.code === 10015) {
+				// unknown webhook, already deleted
+				console.warn('webhook not found')
+			} else {
+				throw err
+			}
+		}
 	}
 
 	private registerEvents(): void {

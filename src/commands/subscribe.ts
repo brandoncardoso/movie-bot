@@ -1,14 +1,10 @@
 import {
-	Client,
 	CommandInteraction,
 	PermissionFlagsBits,
 	SlashCommandBuilder,
-	TextChannel,
 } from 'discord.js'
-import { Channel, ChannelRepository } from '../channel/index.js'
+import { MovieBot } from '../bot/movie-bot.js'
 import { Command } from './command'
-
-const channelRepo = new ChannelRepository()
 
 export const Subscribe: Command = {
 	data: new SlashCommandBuilder()
@@ -18,24 +14,11 @@ export const Subscribe: Command = {
 			PermissionFlagsBits.Administrator | PermissionFlagsBits.ManageGuild,
 		)
 		.setDMPermission(false),
-	run: async function (client: Client, interaction: CommandInteraction): Promise<void> {
-		await interaction.deferReply({ ephemeral: true })
-		const channel = await channelRepo.get(interaction.channelId)
-
-		if (!channel || !channel.webhookId) {
-			const discordChannel: TextChannel = (await client.channels.fetch(
-				interaction.channelId,
-			)) as TextChannel
-
-			const webhook = await discordChannel.createWebhook({
-				name: process.env.BOT_NAME,
-				avatar: './avatar.png',
-			})
-			const channel = new Channel(interaction.channelId, webhook.id, webhook.token)
-			await channelRepo.add(interaction.channelId, channel)
-		}
-
-		console.log('channel subscribed:', interaction.channelId)
-		await interaction.editReply('This channel will now automatically get new movie trailers!')
+	run: async function (client: MovieBot, interaction: CommandInteraction): Promise<void> {
+		await client.registerNewMovieChannel(interaction.channelId)
+		await interaction.reply({
+			content: 'This channel will now automatically get new movie trailers!',
+			ephemeral: true,
+		})
 	},
 }
