@@ -5,15 +5,15 @@
   "type": "module",
   "main": "built/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node built/index.js",
-    "start:dev": "nodemon built/index.js",
+    "build": "rm -rf built/ && tsc",
+    "build:dev": "tsc -w",
     "deployCommands": "node built/deploy-commands.js",
     "format": "prettier --write src/",
+    "lint": "npx eslint --fix .",
     "prepare": "husky install",
-    "build": "rm -rf built/ && tsc",
-    "watch": "tsc -w",
-    "lint": "npx eslint --fix ."
+    "start": "node built/index.js",
+    "start:dev": "tsx watch src/index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Brandon Cardoso",
   "license": "ISC",
@@ -35,9 +35,8 @@
     "eslint": "^8.49.0",
     "husky": "^8.0.2",
     "lint-staged": "^13.0.3",
-    "nodemon": "^3.0.1",
     "prettier": "^2.7.1",
-    "ts-node": "^10.9.1",
+    "tsx": "^3.12.10",
     "typescript": "^4.9.5"
   },
   "lint-staged": {
