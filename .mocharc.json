@@ -1,0 +1,7 @@
+{
+  "exit": true,
+  "recursive": true,
+  "reporter": "min",
+  "require": ["tsx"]
+  "spec": "src/**/*.test.ts",
+}
