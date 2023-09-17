@@ -1,4 +1,13 @@
-import { ActivityType, Channel, Client, Events, GatewayIntentBits, Interaction, TextChannel, WebhookClient } from 'discord.js'
+import {
+	ActivityType,
+	Channel,
+	Client,
+	Events,
+	GatewayIntentBits,
+	Interaction,
+	TextChannel,
+	WebhookClient,
+} from 'discord.js'
 import { ChannelRepository } from '../channel/channel.repository.js'
 import { Commands } from '../commands/index.js'
 import { MovieInfo } from '../movie/movie-info.js'
@@ -14,7 +23,7 @@ export class MovieBot extends Client {
 		this.registerEvents()
 	}
 
-	public findMovie(query:string): Promise<MovieInfo> {
+	public findMovie(query: string): Promise<MovieInfo> {
 		return this.movieProvider.findMovie(query)
 	}
 
@@ -63,11 +72,17 @@ export class MovieBot extends Client {
 	}
 
 	private registerEvents(): void {
-		this.once(Events.ClientReady, async () => { await this.onReady() })
-		this.on(Events.InteractionCreate, async (interaction: Interaction) => { await this.onInterationCreate(interaction) })
-		this.on(Events.ChannelDelete, async (channel: Channel) => { await this.onChannelDelete(channel) })
+		this.once(Events.ClientReady, async () => {
+			await this.onReady()
+		})
+		this.on(Events.InteractionCreate, async (interaction: Interaction) => {
+			await this.onInterationCreate(interaction)
+		})
+		this.on(Events.ChannelDelete, async (channel: Channel) => {
+			await this.onChannelDelete(channel)
+		})
 	}
-	
+
 	private async onReady(): Promise<void> {
 		if (!this.user || !this.application) throw new Error('Error during bot login.')
 

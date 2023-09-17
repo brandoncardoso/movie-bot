@@ -13,10 +13,7 @@ const data = new SlashCommandBuilder()
 	.setName('movie')
 	.setDescription('Get\'s information about a movie.')
 	.addStringOption((option) =>
-		option
-			.setName(titleOption.name)
-			.setDescription(titleOption.description)
-			.setRequired(titleOption.required),
+		option.setName(titleOption.name).setDescription(titleOption.description).setRequired(titleOption.required)
 	)
 	.setDMPermission(true)
 

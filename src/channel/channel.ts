@@ -9,4 +9,3 @@ export class Channel {
 		this.webhookToken = webhookToken
 	}
 }
-

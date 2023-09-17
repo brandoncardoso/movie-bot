@@ -19,7 +19,10 @@ export class TMDBMovieProvider implements MovieProvider {
 		}
 
 		const closestTitleIndex = this.getClosestTitleIndex(query, results)
-		const tmdbMovieInfo = await this.tmdb.movieInfo({ id: results[closestTitleIndex].id, append_to_response: 'videos' }) as MovieWithVideosResponse
+		const tmdbMovieInfo = (await this.tmdb.movieInfo({
+			id: results[closestTitleIndex].id,
+			append_to_response: 'videos',
+		})) as MovieWithVideosResponse
 		const movieInfo = this.mapMovieInfo(tmdbMovieInfo)
 		movieInfo.trailerUrl = this.getTrailer(tmdbMovieInfo)
 		return movieInfo
@@ -38,7 +41,7 @@ export class TMDBMovieProvider implements MovieProvider {
 					day: 'numeric',
 					month: 'short',
 					year: 'numeric',
-				})
+				  })
 				: 'N/A',
 		}
 	}
@@ -55,7 +58,7 @@ export class TMDBMovieProvider implements MovieProvider {
 				}
 				return closest
 			},
-			{ index: 0, distance: 999 },
+			{ index: 0, distance: 999 }
 		)
 
 		return closest.index

@@ -6,10 +6,10 @@ export class ChannelRepository implements Repository<Channel> {
 	channels = ChannelDatastore
 
 	async add(id: string, data: Channel): Promise<Channel> {
-		return await this.channels.update({ channelId: id }, data, {
+		return (await this.channels.update({ channelId: id }, data, {
 			upsert: true,
 			returnUpdatedDocs: true,
-		}) as Channel
+		})) as Channel
 	}
 
 	async remove(id: string): Promise<void> {
