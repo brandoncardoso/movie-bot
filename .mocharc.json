@@ -3,5 +3,6 @@
   "recursive": true,
   "reporter": "min",
   "require": ["tsx"],
-  "spec": "src/**/*.test.ts"
+  "spec": "src/**/*.test.ts",
+  "watch-files": ["src/**/*"]
 }
