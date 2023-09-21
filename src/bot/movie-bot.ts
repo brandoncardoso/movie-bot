@@ -58,7 +58,7 @@ export class MovieBot extends Client {
 				token: webhookToken,
 			})
 			await webhook.delete()
-			await this.channelRepo.unsubscribeChannel(channelId)
+			await this.channelRepo.remove(channelId)
 			console.log(`channel #${channelId} unsubscribed from receiving upcoming movies`)
 		} catch (err) {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access

@@ -23,25 +23,4 @@ export class ChannelRepository implements Repository<Channel> {
 	async getAll(): Promise<Array<Channel>> {
 		return this.channels.find({})
 	}
-
-	getAllSubscribedChannels(): Promise<Channel[]> {
-		return this.channels.find({ webhookId: { $exists: true } })
-	}
-
-	unsubscribeChannel(channelId: string): Promise<Channel> {
-		return this.channels.update(
-			{
-				channelId,
-			},
-			{
-				$unset: {
-					webhookId: true,
-					webhookToken: true,
-				},
-			},
-			{
-				returnUpdatedDocs: true,
-			}
-		)
-	}
 }
