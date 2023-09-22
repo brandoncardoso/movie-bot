@@ -2,12 +2,30 @@ import { MovieInfo } from './movie-info'
 import { MovieProvider } from './movie-provider'
 
 export class MockMovieProvider implements MovieProvider {
-	findMovie(): Promise<MovieInfo> {
-		return new Promise((resolve) => {
-			const movieInfo = {
-				title: 'Fake Movie',
-			} as MovieInfo
-			resolve(movieInfo)
-		})
+	movies: Record<string, MovieInfo> = {
+		'fake movie': {
+			title: 'fake movie',
+			description: 'this is a fake movie',
+			rating: '100',
+			genres: 'Comedy',
+			releaseDate: 'Never',
+			url: 'https://imdb.com',
+		},
+		'with trailer': {
+			title: 'with trailer',
+			description: 'this is a fake movie with a trailer',
+			rating: '100',
+			genres: 'Comedy',
+			releaseDate: 'Never',
+			trailerUrl: 'https://not.a-real-url.co.uk/trailers/1',
+		},
+	}
+
+	findMovie(query: string): Promise<MovieInfo> {
+		if (query && this.movies[query]) {
+			return new Promise((resolve) => resolve(this.movies[query]))
+		} else {
+			throw new Error('movie not found')
+		}
 	}
 }
