@@ -1,6 +1,5 @@
 import { CacheType, CommandInteraction, SlashCommandBuilder } from 'discord.js'
 import { MovieBot } from '../bot/movie-bot.js'
-import { getMovieInfoMessage } from '../helper.js'
 import { Command } from './command'
 
 const titleOption = {
@@ -22,8 +21,8 @@ async function run(client: MovieBot, interaction: CommandInteraction<CacheType>)
 	const movieInfo = await client.findMovie(movieName)
 
 	if (movieInfo) {
-		const movieInfoMsg = getMovieInfoMessage(movieInfo)
-		await interaction.reply(movieInfoMsg)
+		const { embeds, components } = client.getMovieInfoMessage(movieInfo)
+		await interaction.reply({ embeds, components })
 	} else {
 		await interaction.reply({
 			content: `Sorry, I couldn't find anything for "${movieName}".`,

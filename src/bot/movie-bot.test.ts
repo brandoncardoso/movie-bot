@@ -1,4 +1,5 @@
 import { expect } from 'chai'
+import sinon from 'sinon'
 import { CacheType, Events, Interaction, InteractionReplyOptions } from 'discord.js'
 import { MockMovieProvider } from '../movie/movie-provider.mock'
 import { MovieBot } from './movie-bot'
@@ -24,6 +25,10 @@ describe('movie bot', () => {
 	before(() => {
 		mockMovieProvider = new MockMovieProvider()
 		bot = new MovieBot(mockMovieProvider)
+	})
+
+	afterEach(() => {
+		sinon.restore()
 	})
 
 	describe('movie command', () => {
@@ -75,6 +80,17 @@ describe('movie bot', () => {
 			expect(components).to.have.lengthOf(1)
 			expect(components[0].data.label).to.equal('Details')
 			expect(components[0].data.url).to.be.a('string')
+		})
+	})
+
+	describe('upcoming movies', () => {
+		it('should post upcoming movies', async () => {
+			const sendMessage = sinon.stub(bot, 'sendMessageToChannel').callsFake(sinon.stub())
+			sinon.stub(bot.channelRepo, 'getAll').resolves([{ channelId: '1', subscribed: true }])
+
+			await bot.postUpcomingMovies()
+
+			expect(sendMessage.callCount).to.equal(Object.keys(mockMovieProvider.movies).length)
 		})
 	})
 })

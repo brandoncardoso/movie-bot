@@ -23,9 +23,13 @@ export class MockMovieProvider implements MovieProvider {
 
 	findMovie(query: string): Promise<MovieInfo> {
 		if (query && this.movies[query]) {
-			return new Promise((resolve) => resolve(this.movies[query]))
+			return Promise.resolve(this.movies[query])
 		} else {
 			throw new Error('movie not found')
 		}
+	}
+
+	getUpcomingMovies(): Promise<MovieInfo[]> {
+		return Promise.resolve(Object.values(this.movies))
 	}
 }

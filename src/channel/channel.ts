@@ -1,11 +1,9 @@
 export class Channel {
 	channelId: string
-	webhookId: string
-	webhookToken: string
+	subscribed: boolean
 
-	constructor(id: string, webhookId: string, webhookToken: string) {
+	constructor(id: string, subscribed: boolean = true) {
 		this.channelId = id
-		this.webhookId = webhookId
-		this.webhookToken = webhookToken
+		this.subscribed = subscribed
 	}
 }

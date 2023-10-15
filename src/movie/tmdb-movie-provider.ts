@@ -12,6 +12,15 @@ export class TMDBMovieProvider implements MovieProvider {
 		this.tmdb = new MovieDb(apiKey)
 	}
 
+	async getUpcomingMovies(): Promise<MovieInfo[]> {
+		const { results } = await this.tmdb.discoverMovie({
+			sort_by: 'popularity.desc',
+			include_video: true,
+			'release_date.gte': new Date().toISOString().substring(0, 10),
+		})
+		return results.map((movie) => this.mapMovieInfo(movie as unknown as MovieWithVideosResponse))
+	}
+
 	async findMovie(query: string): Promise<MovieInfo> {
 		const { results } = await this.tmdb.searchMovie({ query })
 		if (results.length <= 0) {

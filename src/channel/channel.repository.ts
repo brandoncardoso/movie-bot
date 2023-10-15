@@ -12,6 +12,10 @@ export class ChannelRepository implements Repository<Channel> {
 		})) as Channel
 	}
 
+	async unsubscribe(id: string): Promise<void> {
+		await this.channels.update({ channelId: id }, { $set: { subscribed: false } })
+	}
+
 	async remove(id: string): Promise<void> {
 		await this.channels.remove({ channelId: id }, { multi: false })
 	}

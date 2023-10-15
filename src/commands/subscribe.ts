@@ -5,13 +5,13 @@ import { Command } from './command'
 export const Subscribe: Command = {
 	data: new SlashCommandBuilder()
 		.setName('subscribe')
-		.setDescription('Subscribes this channel to automatically receive new movie trailers.')
+		.setDescription('Subscribes this channel to automatically receive information about upcoming movies.')
 		.setDefaultMemberPermissions(PermissionFlagsBits.Administrator | PermissionFlagsBits.ManageGuild)
 		.setDMPermission(false),
 	run: async function (client: MovieBot, interaction: CommandInteraction): Promise<void> {
-		await client.registerNewMovieChannel(interaction.channelId)
+		await client.subscribeChannel(interaction.channelId)
 		await interaction.reply({
-			content: 'This channel will now automatically get new movie trailers!',
+			content: 'This channel is now subscribed to get info about upcoming movies!',
 			ephemeral: true,
 		})
 	},

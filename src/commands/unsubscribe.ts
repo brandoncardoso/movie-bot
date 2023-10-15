@@ -5,13 +5,13 @@ import { Command } from './command'
 export const Unsubscribe: Command = {
 	data: new SlashCommandBuilder()
 		.setName('unsubscribe')
-		.setDescription('Unsubscribes this channel from automatically receiving new movie trailers.')
+		.setDescription('Unsubscribes this channel from automatically receiving information about upcoming movies.')
 		.setDefaultMemberPermissions(PermissionFlagsBits.Administrator | PermissionFlagsBits.ManageGuild)
 		.setDMPermission(false),
 	run: async function (client: MovieBot, interaction: CommandInteraction<CacheType>): Promise<void> {
-		await client.unregisterNewMovieChannel(interaction.channelId)
+		await client.unsubscribeChannel(interaction.channelId)
 		await interaction.reply({
-			content: 'This channel will no longer automatically get new movie trailers.',
+			content: 'This channel will no longer get info about upcoming movies.',
 			ephemeral: true,
 		})
 	},
