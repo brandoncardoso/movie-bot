@@ -4,8 +4,17 @@
     "allowJs": true,
     "module": "es2022",
     "target": "es2022",
+    "lib": ["es6"],
+    "types": ["reflect-metadata", "mocha"],
     "moduleResolution": "node",
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
   },
-  "include": ["./src/**/*"]
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }

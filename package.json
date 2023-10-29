@@ -21,10 +21,12 @@
   "dependencies": {
     "discord.js": "^14.6.0",
     "dotenv": "^10.0.0",
+    "inversify": "^6.0.2",
     "levenshtein": "^1.0.5",
     "moviedb-promise": "^3.2.1",
     "nedb-promises": "^5.0.3",
-    "node-schedule": "^2.1.0"
+    "node-schedule": "^2.1.0",
+    "reflect-metadata": "^0.1.13"
   },
   "devDependencies": {
     "@types/chai": "^4.3.6",
@@ -45,7 +47,7 @@
     "prettier": "^2.7.1",
     "sinon": "^16.1.0",
     "tsx": "^3.12.10",
-    "typescript": "^4.9.5"
+    "typescript": "^5.2.2"
   },
   "lint-staged": {
     "src/**/*": [
