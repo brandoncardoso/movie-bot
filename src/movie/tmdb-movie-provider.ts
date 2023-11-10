@@ -1,3 +1,4 @@
+import { injectable } from 'inversify'
 import levenshtein from 'levenshtein'
 import { MovieDb, MovieResponse, VideosResponse } from 'moviedb-promise'
 import { MovieInfo } from './movie-info'
@@ -5,11 +6,12 @@ import { MovieProvider } from './movie-provider'
 
 type MovieWithVideosResponse = MovieResponse & { videos: VideosResponse }
 
+@injectable()
 export class TMDBMovieProvider implements MovieProvider {
-	tmdb: MovieDb
+	private tmdb: MovieDb
 
-	constructor(apiKey: string) {
-		this.tmdb = new MovieDb(apiKey)
+	constructor() {
+		this.tmdb = new MovieDb(process.env.TMDB_API_KEY)
 	}
 
 	async getUpcomingMovies(): Promise<MovieInfo[]> {

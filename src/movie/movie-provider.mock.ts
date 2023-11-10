@@ -1,6 +1,8 @@
+import { injectable } from 'inversify'
 import { MovieInfo } from './movie-info'
 import { MovieProvider } from './movie-provider'
 
+@injectable()
 export class MockMovieProvider implements MovieProvider {
 	movies: Record<string, MovieInfo> = {
 		'fake movie': {

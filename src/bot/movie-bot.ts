@@ -11,18 +11,21 @@ import {
 	Interaction,
 	MessageCreateOptions,
 } from 'discord.js'
+import { inject } from 'inversify'
 import { ChannelRepository } from '../channel/channel.repository.js'
 import { Commands } from '../commands/index.js'
+import { container } from '../inversify.config.js'
 import { MovieInfo } from '../movie/movie-info.js'
 import { MovieProvider } from '../movie/movie-provider.js'
+import { TYPES } from '../types.js'
 
 export class MovieBot extends Client {
-	channelRepo = new ChannelRepository()
-	movieProvider: MovieProvider
+	@inject(TYPES.MovieProvider) private movieProvider: MovieProvider = container.get<MovieProvider>(TYPES.MovieProvider)
 
-	constructor(movieProvider: MovieProvider) {
+	channelRepo = new ChannelRepository()
+
+	constructor() {
 		super({ intents: [GatewayIntentBits.Guilds] })
-		this.movieProvider = movieProvider
 		this.registerEvents()
 	}
 
