@@ -3,8 +3,8 @@ import {
 	ActivityType,
 	ButtonBuilder,
 	ButtonStyle,
-	Channel,
 	Client,
+	Channel,
 	EmbedBuilder,
 	Events,
 	GatewayIntentBits,
@@ -12,17 +12,19 @@ import {
 	MessageCreateOptions,
 } from 'discord.js'
 import { inject } from 'inversify'
-import { ChannelRepository } from '../channel/channel.repository.js'
 import { Commands } from '../commands/index.js'
+import { Repository } from '../common/repository.js'
 import { container } from '../inversify.config.js'
 import { MovieInfo } from '../movie/movie-info.js'
 import { MovieProvider } from '../movie/movie-provider.js'
+import { MovieChannel } from '../movie_channel/movie_channel.js'
 import { TYPES } from '../types.js'
 
 export class MovieBot extends Client {
-	@inject(TYPES.MovieProvider) private movieProvider: MovieProvider = container.get<MovieProvider>(TYPES.MovieProvider)
-
-	channelRepo = new ChannelRepository()
+	@inject(TYPES.MovieProvider) private movieProvider = container.get<MovieProvider>(TYPES.MovieProvider)
+	@inject(TYPES.MovieChannelRepository) private movieChannelRepo = container.get<Repository<MovieChannel>>(
+		TYPES.MovieChannelRepository
+	)
 
 	constructor() {
 		super({ intents: [GatewayIntentBits.Guilds] })
@@ -37,7 +39,7 @@ export class MovieBot extends Client {
 		const upcomingMovies = await this.movieProvider.getUpcomingMovies()
 
 		const movieInfoMessages = upcomingMovies.map((movie) => this.getMovieInfoMessage(movie))
-		const channels = await this.channelRepo.getAll()
+		const channels = await this.movieChannelRepo.getAll()
 
 		const postPromises = movieInfoMessages.flatMap((message) => {
 			return channels.map(({ channelId }) => this.sendMessageToChannel(channelId, message))
@@ -48,19 +50,17 @@ export class MovieBot extends Client {
 	}
 
 	public async subscribeChannel(channelId: string): Promise<void> {
-		const channel = await this.channelRepo.get(channelId)
-
-		if (channel?.subscribed) {
-			console.log(`channel #${channelId} already subscribed`)
-			return
+		try {
+			const channel = await this.movieChannelRepo.get(channelId)
+			if (channel.subscribed) console.log(`channel #${channelId} already subscribed`)
+		} catch {
+			await this.movieChannelRepo.add(channelId, { channelId, subscribed: true })
+			console.log(`channel #${channelId} subscribed to receive upcoming movies`)
 		}
-
-		await this.channelRepo.add(channelId, { channelId, subscribed: true })
-		console.log(`channel #${channelId} subscribed to receive upcoming movies`)
 	}
 
 	public async unsubscribeChannel(channelId: string): Promise<void> {
-		await this.channelRepo.unsubscribe(channelId)
+		await this.movieChannelRepo.remove(channelId)
 		console.log(`channel #${channelId} unsubscribed from receiving upcoming movies`)
 	}
 
@@ -140,6 +140,6 @@ export class MovieBot extends Client {
 	}
 
 	private async onChannelDelete(channel: Channel): Promise<void> {
-		return this.channelRepo.remove(channel.id)
+		return this.movieChannelRepo.remove(channel.id)
 	}
 }

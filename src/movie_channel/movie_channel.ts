@@ -1,4 +1,4 @@
-export class Channel {
+export class MovieChannel {
 	channelId: string
 	subscribed: boolean
 

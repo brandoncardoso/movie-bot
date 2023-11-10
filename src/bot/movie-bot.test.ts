@@ -2,13 +2,18 @@ import { expect } from 'chai'
 import sinon from 'sinon'
 import { CacheType, Events, Interaction, InteractionReplyOptions } from 'discord.js'
 import { container } from '../inversify.config'
+import { MockMovieChannelRepository } from '../movie_channel/movie_channel_repository.mock'
 import { MockMovieProvider } from '../movie/movie-provider.mock'
 import { MovieBot } from './movie-bot'
-import { TYPES } from '../types'
+import { MovieChannel } from '../movie_channel'
 import { MovieProvider } from '../movie/movie-provider'
+import { Repository } from '../common/repository'
+import { TYPES } from '../types'
 
 describe('movie bot', () => {
 	let bot: MovieBot
+	let mockMovieProvider: MockMovieProvider
+	let mockMovieChannelRepo: MockMovieChannelRepository
 
 	const mockInteraction = (
 		commandName: string,
@@ -26,9 +31,10 @@ describe('movie bot', () => {
 
 	beforeEach(() => {
 		container.snapshot()
-		container.unbind(TYPES.MovieProvider)
-		const mockMovieProvider = new MockMovieProvider()
-		container.bind<MovieProvider>(TYPES.MovieProvider).toConstantValue(mockMovieProvider)
+		mockMovieProvider = new MockMovieProvider()
+		mockMovieChannelRepo = new MockMovieChannelRepository()
+		container.rebind<MovieProvider>(TYPES.MovieProvider).toConstantValue(mockMovieProvider)
+		container.rebind<Repository<MovieChannel>>(TYPES.MovieChannelRepository).toConstantValue(mockMovieChannelRepo)
 
 		bot = new MovieBot()
 	})
@@ -93,11 +99,12 @@ describe('movie bot', () => {
 	describe('upcoming movies', () => {
 		it('should post upcoming movies', async () => {
 			const sendMessage = sinon.stub(bot, 'sendMessageToChannel').callsFake(sinon.stub())
-			sinon.stub(bot.channelRepo, 'getAll').resolves([{ channelId: '1', subscribed: true }])
+			const upcomingMovies = await mockMovieProvider.getUpcomingMovies()
 
+			await bot.subscribeChannel('fake_channel')
 			await bot.postUpcomingMovies()
 
-			expect(sendMessage.callCount).to.be.greaterThan(0)
+			expect(sendMessage.callCount).to.equal(upcomingMovies.length)
 		})
 	})
 })
