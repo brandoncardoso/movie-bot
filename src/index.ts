@@ -1,6 +1,6 @@
 import 'reflect-metadata'
 import dotenv from 'dotenv'
-import { MovieBot } from './bot/movie-bot.js'
+import { MovieBot } from './bot/movie_bot.js'
 
 dotenv.config()
 

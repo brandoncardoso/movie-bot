@@ -7,7 +7,7 @@
   "scripts": {
     "build": "rm -rf built/ && tsc",
     "build:dev": "tsc -w",
-    "deployCommands": "node built/deploy-commands.js",
+    "deployCommands": "node built/deploy_commands.js",
     "format": "prettier --write src/",
     "lint": "npx eslint --fix .",
     "prepare": "husky install",

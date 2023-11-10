@@ -1,6 +1,6 @@
 import { injectable } from 'inversify'
-import { MovieInfo } from './movie-info'
-import { MovieProvider } from './movie-provider'
+import { MovieInfo } from './movie_info.js'
+import { MovieProvider } from './movie_provider.js'
 
 @injectable()
 export class MockMovieProvider implements MovieProvider {

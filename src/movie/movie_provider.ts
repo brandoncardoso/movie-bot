@@ -1,4 +1,4 @@
-import { MovieInfo } from './movie-info'
+import { MovieInfo } from './movie_info.js'
 
 export interface MovieProvider {
 	findMovie(query: string): Promise<MovieInfo>
