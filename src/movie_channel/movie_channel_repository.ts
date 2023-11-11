@@ -17,14 +17,21 @@ export class MovieChannelRepository implements Repository<MovieChannel> {
 	}
 
 	async add(id: string, data: MovieChannel): Promise<MovieChannel> {
-		return (await this.channels.update({ channelId: id }, data, {
-			upsert: true,
-			returnUpdatedDocs: true,
+		return (await this.channels.insert({
+			channelId: id,
+			...data,
 		})) as MovieChannel
 	}
 
 	async remove(id: string): Promise<void> {
 		await this.channels.remove({ channelId: id }, { multi: false })
+	}
+
+	async update(id: string, data: MovieChannel): Promise<MovieChannel> {
+		return (await this.channels.update({ channelId: id }, data, {
+			multi: false,
+			returnUpdatedDocs: true,
+		})) as MovieChannel
 	}
 
 	async get(id: string): Promise<MovieChannel> {

@@ -31,6 +31,7 @@ describe('movie bot', () => {
 
 	beforeEach(() => {
 		container.snapshot()
+
 		mockMovieProvider = new MockMovieProvider()
 		mockMovieChannelRepo = new MockMovieChannelRepository()
 		container.rebind<MovieProvider>(TYPES.MovieProvider).toConstantValue(mockMovieProvider)
@@ -93,6 +94,43 @@ describe('movie bot', () => {
 			expect(components).to.have.lengthOf(1)
 			expect(components[0].data.label).to.equal('Details')
 			expect(components[0].data.url).to.be.a('string')
+		})
+	})
+
+	describe('subscribe command', () => {
+		it('should subscribe a channel', async () => {
+			const channelId = '1'
+			await mockInteraction('subscribe', { channelId })
+
+			const subscribedChannel = await mockMovieChannelRepo.get(channelId)
+
+			expect(subscribedChannel.channelId).to.equal(channelId)
+			expect(subscribedChannel.subscribed).to.equal(true)
+		})
+
+		it('should resubscribe a channel', async () => {
+			const channelId = '1'
+			await mockInteraction('subscribe', { channelId })
+			await mockInteraction('unsubscribe', { channelId })
+			await mockInteraction('subscribe', { channelId })
+
+			const subscribedChannel = await mockMovieChannelRepo.get(channelId)
+
+			expect(subscribedChannel.channelId).to.equal(channelId)
+			expect(subscribedChannel.subscribed).to.equal(true)
+		})
+	})
+
+	describe('unsubscribe command', () => {
+		it('should unsubscribe a channel', async () => {
+			const channelId = '1'
+			await mockInteraction('subscribe', { channelId })
+			await mockInteraction('unsubscribe', { channelId })
+
+			const subscribedChannel = await mockMovieChannelRepo.get(channelId)
+
+			expect(subscribedChannel.channelId).to.equal(channelId)
+			expect(subscribedChannel.subscribed).to.equal(false)
 		})
 	})
 

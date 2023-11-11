@@ -16,6 +16,11 @@ export class MockMovieChannelRepository implements Repository<MovieChannel> {
 		return Promise.resolve()
 	}
 
+	update(id: string, data: MovieChannel): Promise<MovieChannel> {
+		this.channels[id] = data
+		return Promise.resolve(data)
+	}
+
 	get(id: string): Promise<MovieChannel> {
 		const channel = this.channels[id]
 		if (!channel) throw new Error('channel not found')

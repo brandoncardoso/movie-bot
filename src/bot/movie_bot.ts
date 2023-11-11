@@ -52,16 +52,19 @@ export class MovieBot extends Client {
 	public async subscribeChannel(channelId: string): Promise<void> {
 		try {
 			const channel = await this.movieChannelRepo.get(channelId)
-			if (channel.subscribed) console.log(`channel #${channelId} already subscribed`)
+			if (!channel.subscribed) {
+				await this.movieChannelRepo.update(channelId, {
+					...channel,
+					subscribed: true,
+				})
+			}
 		} catch {
 			await this.movieChannelRepo.add(channelId, { channelId, subscribed: true })
-			console.log(`channel #${channelId} subscribed to receive upcoming movies`)
 		}
 	}
 
 	public async unsubscribeChannel(channelId: string): Promise<void> {
-		await this.movieChannelRepo.remove(channelId)
-		console.log(`channel #${channelId} unsubscribed from receiving upcoming movies`)
+		await this.movieChannelRepo.update(channelId, { channelId, subscribed: false })
 	}
 
 	public async sendMessageToChannel(channelId: string, content: MessageCreateOptions): Promise<void> {
