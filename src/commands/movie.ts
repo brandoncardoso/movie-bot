@@ -18,14 +18,13 @@ const data = new SlashCommandBuilder()
 
 async function run(client: MovieBot, interaction: CommandInteraction<CacheType>): Promise<void> {
 	const movieName = interaction.options.get(titleOption.name).value as string
-	const movieInfo = await client.findMovie(movieName)
-
-	if (movieInfo) {
+	try {
+		const movieInfo = await client.findMovie(movieName)
 		const { embeds, components } = client.getMovieInfoMessage(movieInfo)
 		await interaction.reply({ embeds, components })
-	} else {
+	} catch (err) {
 		await interaction.reply({
-			content: `Sorry, I couldn't find anything for "${movieName}".`,
+			content: `Sorry, I couldn't find any movies with "${movieName}".`,
 			ephemeral: true,
 		})
 	}

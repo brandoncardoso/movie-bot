@@ -95,6 +95,23 @@ describe('movie bot', () => {
 			expect(components[0].data.label).to.equal('Details')
 			expect(components[0].data.url).to.be.a('string')
 		})
+
+		it('should tell user if no movie was found with their query', async () => {
+			sinon.stub(mockMovieProvider, 'findMovie').throws('not found')
+			const movieQuery = 'non-existant movie'
+
+			const response = await mockInteraction('movie', {
+				options: {
+					get: () => {
+						return { value: movieQuery }
+					},
+				},
+			})
+
+			expect(response).to.have.property('content')
+			expect(response.content).to.contain(movieQuery)
+			expect(response).to.have.property('ephemeral').and.to.equal(true)
+		})
 	})
 
 	describe('subscribe command', () => {
