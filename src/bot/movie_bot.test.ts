@@ -47,26 +47,35 @@ describe('movie bot', () => {
 
 	describe('movie command', () => {
 		it('should return movie info', async () => {
+			const movieTitle = 'fake movie'
+			const movieInfo = await mockMovieProvider.findMovie(movieTitle)
+
 			const response = await mockInteraction('movie', {
 				options: {
 					get: () => {
-						return { value: 'fake movie' }
+						return { value: movieTitle }
 					},
 				},
 			})
 
-			expect(response.embeds).to.have.lengthOf(1)
 			expect(response.components).to.have.lengthOf(1)
+			expect(response.embeds).to.have.lengthOf(1)
 			const embed = response.embeds[0] as unknown as { data: Record<string, unknown> }
-			expect(embed).to.have.property('data')
 			expect(embed.data).to.have.keys(['title', 'description', 'url', 'image', 'color', 'fields'])
+			expect(embed.data.title).to.equal(movieInfo.title)
+			expect(embed.data.description).to.equal(movieInfo.description)
+			expect(embed.data.url).to.equal(movieInfo.url)
+			expect(embed.data.image).to.equal(movieInfo.posterUrl)
 		})
 
 		it('should return movie info with a trailer button/link', async () => {
+			const movieTitle = 'with trailer'
+			const movieInfo = await mockMovieProvider.findMovie(movieTitle)
+
 			const response = await mockInteraction('movie', {
 				options: {
 					get: () => {
-						return { value: 'with trailer' }
+						return { value: movieTitle }
 					},
 				},
 			})
@@ -75,15 +84,17 @@ describe('movie bot', () => {
 			expect(response.components).to.have.lengthOf(1)
 			const { components } = response.components[0] as unknown as { components: { data: Record<string, unknown> }[] }
 			expect(components).to.have.lengthOf(1)
-			expect(components[0].data.label).to.equal('Trailer')
-			expect(components[0].data.url).to.be.a('string')
+			expect(components[0].data.url).to.equal(movieInfo.trailerUrl)
 		})
 
 		it('should return movie info with a details button/link', async () => {
+			const movieTitle = 'fake movie'
+			const movieInfo = await mockMovieProvider.findMovie(movieTitle)
+
 			const response = await mockInteraction('movie', {
 				options: {
 					get: () => {
-						return { value: 'fake movie' }
+						return { value: movieTitle }
 					},
 				},
 			})
@@ -92,8 +103,7 @@ describe('movie bot', () => {
 			expect(response.components).to.have.lengthOf(1)
 			const { components } = response.components[0] as unknown as { components: { data: Record<string, unknown> }[] }
 			expect(components).to.have.lengthOf(1)
-			expect(components[0].data.label).to.equal('Details')
-			expect(components[0].data.url).to.be.a('string')
+			expect(components[0].data.url).to.equal(movieInfo.url)
 		})
 
 		it('should tell user if no movie was found with their query', async () => {
