@@ -163,13 +163,23 @@ describe('movie bot', () => {
 
 	describe('upcoming movies', () => {
 		it('should post upcoming movies', async () => {
-			const sendMessage = sinon.stub(bot, 'sendMessageToChannel').callsFake(sinon.stub())
+			const sendMessage = sinon.stub(bot, 'sendMessageToChannel')
 			const upcomingMovies = await mockMovieProvider.getUpcomingMovies()
 
 			await bot.subscribeChannel('fake_channel')
 			await bot.postUpcomingMovies()
 
 			expect(sendMessage.callCount).to.equal(upcomingMovies.length)
+		})
+
+		it('should not post when there are no upcoming movies', async () => {
+			const sendMessage = sinon.stub(bot, 'sendMessageToChannel')
+			sinon.stub(mockMovieProvider, 'getUpcomingMovies').resolves([])
+
+			await bot.subscribeChannel('fake_channel')
+			await bot.postUpcomingMovies()
+
+			expect(sendMessage.callCount).to.equal(0)
 		})
 	})
 })
