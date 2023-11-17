@@ -19,7 +19,7 @@ export class TMDBMovieProvider implements MovieProvider {
 			include_video: true,
 			'release_date.gte': new Date().toISOString().substring(0, 10),
 		})
-		return results.map((movie) => this.mapMovieInfo(movie as unknown as MovieWithVideosResponse))
+		return results.map((movie) => this.tranform(movie as unknown as MovieWithVideosResponse))
 	}
 
 	async findMovie(query: string): Promise<MovieInfo> {
@@ -29,16 +29,15 @@ export class TMDBMovieProvider implements MovieProvider {
 		}
 
 		const closestTitleIndex = this.getClosestTitleIndex(query, results)
-		const tmdbMovieInfo = (await this.tmdb.movieInfo({
+		const tmdbMovieInfo = await this.tmdb.movieInfo({
 			id: results[closestTitleIndex].id,
 			append_to_response: 'videos',
-		})) as MovieWithVideosResponse
-		const movieInfo = this.mapMovieInfo(tmdbMovieInfo)
-		movieInfo.trailerUrl = this.getTrailer(tmdbMovieInfo)
-		return movieInfo
+		})
+
+		return this.tranform(tmdbMovieInfo as MovieWithVideosResponse)
 	}
 
-	private mapMovieInfo(movie: MovieWithVideosResponse): MovieInfo {
+	private tranform(movie: MovieWithVideosResponse): MovieInfo {
 		return {
 			title: movie.title,
 			description: movie.overview,
@@ -46,6 +45,7 @@ export class TMDBMovieProvider implements MovieProvider {
 			posterUrl: movie.poster_path ? `https://image.tmdb.org/t/p/original/${movie.poster_path}` : null,
 			rating: movie.vote_average ? `${(movie.vote_average * 10).toFixed(0)}%` : 'N/A',
 			genres: movie.genres?.map(({ name }) => name).join(', ') || 'N/A',
+			trailerUrl: this.tryGetTrailerUrl(movie),
 			releaseDate: movie.release_date
 				? new Date(movie.release_date).toLocaleDateString('en-US', {
 					day: 'numeric',
@@ -74,13 +74,10 @@ export class TMDBMovieProvider implements MovieProvider {
 		return closest.index
 	}
 
-	private getTrailer(movie: MovieWithVideosResponse): string | null {
+	private tryGetTrailerUrl(movie: MovieWithVideosResponse): string | null {
 		const trailer = movie.videos?.results?.find((video) => video.type === 'Trailer')
 
-		if (!trailer) {
-			console.log('trailer not found on TMDB')
-			return null
-		}
+		if (!trailer) return null
 
 		switch (trailer?.site) {
 		case 'YouTube':
