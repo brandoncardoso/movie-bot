@@ -13,8 +13,9 @@
     "prepare": "husky install",
     "start": "node built/index.js",
     "start:dev": "tsx watch src/index.ts",
-    "test": "mocha",
-    "test:dev": "mocha --watch"
+    "test": "nyc mocha",
+    "test:dev": "mocha --watch",
+    "coverage": "nyc report --reporter=lcov"
   },
   "author": "Brandon Cardoso",
   "license": "ISC",
@@ -44,6 +45,7 @@
     "husky": "^8.0.2",
     "lint-staged": "^13.0.3",
     "mocha": "^10.2.0",
+    "nyc": "^15.1.0",
     "prettier": "^2.7.1",
     "sinon": "^16.1.0",
     "tsx": "^3.12.10",
