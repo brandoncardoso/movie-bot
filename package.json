@@ -31,6 +31,7 @@
   },
   "devDependencies": {
     "@types/chai": "^4.3.6",
+    "@types/chai-as-promised": "^7.1.8",
     "@types/levenshtein": "^1.0.1",
     "@types/mocha": "^10.0.1",
     "@types/node": "^18.11.9",
@@ -39,6 +40,7 @@
     "@typescript-eslint/eslint-plugin": "^6.7.0",
     "@typescript-eslint/parser": "^6.7.0",
     "chai": "^4.3.8",
+    "chai-as-promised": "^7.1.1",
     "discord-api-types": "^0.26.1",
     "eslint": "^8.49.0",
     "eslint-config-prettier": "^9.0.0",
