@@ -1,40 +1,37 @@
-import { injectable } from 'inversify'
+import { inject, injectable } from 'inversify'
 import levenshtein from 'levenshtein'
-import { MovieDb, MovieResponse, VideosResponse } from 'moviedb-promise'
+import { container } from '../inversify.config.js'
+import { TYPES } from '../types.js'
+import { MovieWithVideosResponse, TmdbApi } from './tmdb_api_wrapper.js'
 import { MovieInfo, MovieProvider } from './types.js'
 
-type MovieWithVideosResponse = MovieResponse & { videos: VideosResponse }
-
 @injectable()
-export class TMDBMovieProvider implements MovieProvider {
-	private tmdb: MovieDb
-
-	constructor() {
-		this.tmdb = new MovieDb(process.env.TMDB_API_KEY)
-	}
+export class TmdbMovieProvider implements MovieProvider {
+	@inject(TYPES.TmdbApi) private tmdb = container.get<TmdbApi>(TYPES.TmdbApi)
 
 	async getUpcomingMovies(): Promise<MovieInfo[]> {
-		const { results } = await this.tmdb.discoverMovie({
+		const results = await this.tmdb.discoverMovie({
 			sort_by: 'popularity.desc',
 			include_video: true,
 			'release_date.gte': new Date().toISOString().substring(0, 10),
 		})
-		return results.map((movie) => this.tranform(movie as unknown as MovieWithVideosResponse))
+		return results.map((movie) => this.tranform(movie))
 	}
 
 	async findMovie(query: string): Promise<MovieInfo> {
-		const { results } = await this.tmdb.searchMovie({ query })
+		const results = await this.tmdb.searchMovie({ query })
 		if (results.length <= 0) {
 			throw new Error(`No results found for '${query}'.`)
 		}
 
-		const closestTitleIndex = this.getClosestTitleIndex(query, results)
+		const titles = results.map(({ title }) => title)
+		const closestTitleIndex = this.getClosestTitleIndex(query, titles)
 		const tmdbMovieInfo = await this.tmdb.movieInfo({
 			id: results[closestTitleIndex].id,
 			append_to_response: 'videos',
 		})
 
-		return this.tranform(tmdbMovieInfo as MovieWithVideosResponse)
+		return this.tranform(tmdbMovieInfo)
 	}
 
 	private tranform(movie: MovieWithVideosResponse): MovieInfo {
@@ -56,11 +53,11 @@ export class TMDBMovieProvider implements MovieProvider {
 		}
 	}
 
-	private getClosestTitleIndex(title: string, movies: MovieResponse[]): number {
+	private getClosestTitleIndex(title: string, movieTitles: string[]): number {
 		const targetTitle = title.trim().toLowerCase()
-		const movieTitles = movies.map(({ title }) => title.trim().toLowerCase())
+		const titles = movieTitles.map((movieTitle) => movieTitle.trim().toLowerCase())
 
-		const closest = movieTitles.reduce(
+		const closest = titles.reduce(
 			(closest: { index: number; distance: number }, currTitle: string, index: number) => {
 				const distance = new levenshtein(targetTitle, currTitle).distance
 				if (distance < closest.distance) {
