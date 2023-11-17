@@ -1,6 +1,6 @@
 import { CacheType, CommandInteraction, SlashCommandBuilder } from 'discord.js'
 import { MovieBot } from '../bot/movie_bot.js'
-import { Command } from './command.js'
+import { Command } from './types.js'
 
 const titleOption = {
 	name: 'title',

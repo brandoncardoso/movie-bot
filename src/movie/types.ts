@@ -8,3 +8,8 @@ export type MovieInfo = {
 	genres?: string
 	releaseDate?: string
 }
+
+export interface MovieProvider {
+	findMovie(query: string): Promise<MovieInfo>
+	getUpcomingMovies(): Promise<MovieInfo[]>
+}

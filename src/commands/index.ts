@@ -1,4 +1,4 @@
-import { Command } from './command.js'
+import { Command } from './types.js'
 import { Subscribe } from './subscribe.js'
 import { Unsubscribe } from './unsubscribe.js'
 import { Movie } from './movie.js'

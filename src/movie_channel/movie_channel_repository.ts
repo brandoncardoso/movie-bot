@@ -1,7 +1,7 @@
 import { injectable } from 'inversify'
 import Datastore from 'nedb-promises'
-import { Repository } from '../common/repository.js'
-import { MovieChannel } from './movie_channel.js'
+import { Repository } from '../common/index.js'
+import { MovieChannel } from './index.js'
 
 @injectable()
 export class MovieChannelRepository implements Repository<MovieChannel> {

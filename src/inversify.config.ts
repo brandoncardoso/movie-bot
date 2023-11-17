@@ -1,10 +1,9 @@
 import 'reflect-metadata'
 import { Container } from 'inversify'
-import { MovieProvider } from './movie/movie_provider.js'
-import { TMDBMovieProvider } from './movie/tmdb_movie_provider.js'
 import { TYPES } from './types.js'
-import { Repository } from './common/repository.js'
+import { Repository } from './common/index.js'
 import { MovieChannel, MovieChannelRepository } from './movie_channel/index.js'
+import { MovieProvider, TMDBMovieProvider } from './movie/index.js'
 
 const container = new Container()
 

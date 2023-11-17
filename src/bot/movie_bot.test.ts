@@ -2,13 +2,11 @@ import { expect } from 'chai'
 import sinon from 'sinon'
 import { CacheType, Events, Interaction, InteractionReplyOptions } from 'discord.js'
 import { container } from '../inversify.config'
-import { MockMovieChannelRepository } from '../movie_channel/movie_channel_repository.mock'
-import { MockMovieProvider } from '../movie/movie_provider.mock'
-import { MovieBot } from './movie_bot'
-import { MovieChannel } from '../movie_channel'
-import { MovieProvider } from '../movie/movie_provider'
-import { Repository } from '../common/repository'
+import { Repository } from '../common'
 import { TYPES } from '../types'
+import { MovieBot } from './movie_bot'
+import { MockMovieChannelRepository, MovieChannel } from '../movie_channel'
+import { MockMovieProvider, MovieProvider } from '../movie'
 
 describe('movie bot', () => {
 	let bot: MovieBot

@@ -1,8 +1,7 @@
 import { injectable } from 'inversify'
 import levenshtein from 'levenshtein'
 import { MovieDb, MovieResponse, VideosResponse } from 'moviedb-promise'
-import { MovieInfo } from './movie_info.js'
-import { MovieProvider } from './movie_provider.js'
+import { MovieInfo, MovieProvider } from './types.js'
 
 type MovieWithVideosResponse = MovieResponse & { videos: VideosResponse }
 

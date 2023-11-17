@@ -1,6 +1,6 @@
 import { CommandInteraction, PermissionFlagsBits, SlashCommandBuilder } from 'discord.js'
 import { MovieBot } from '../bot/movie_bot.js'
-import { Command } from './command.js'
+import { Command } from './types.js'
 
 export const Subscribe: Command = {
 	data: new SlashCommandBuilder()

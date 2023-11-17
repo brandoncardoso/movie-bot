@@ -1,6 +1,6 @@
 import { injectable } from 'inversify'
-import { Repository } from '../common/repository'
-import { MovieChannel } from './movie_channel'
+import { Repository } from '../common/index'
+import { MovieChannel } from './types'
 
 @injectable()
 export class MockMovieChannelRepository implements Repository<MovieChannel> {

@@ -12,12 +12,11 @@ import {
 	MessageCreateOptions,
 } from 'discord.js'
 import { inject } from 'inversify'
-import { Commands } from '../commands/index.js'
-import { Repository } from '../common/repository.js'
 import { container } from '../inversify.config.js'
-import { MovieInfo } from '../movie/movie_info.js'
-import { MovieProvider } from '../movie/movie_provider.js'
-import { MovieChannel } from '../movie_channel/movie_channel.js'
+import { Commands } from '../commands/index.js'
+import { Repository } from '../common/index.js'
+import { MovieInfo, MovieProvider } from '../movie/index.js'
+import { MovieChannel } from '../movie_channel/index.js'
 import { TYPES } from '../types.js'
 
 export class MovieBot extends Client {
