@@ -23,7 +23,7 @@ module.exports = {
 		sourceType: 'module',
 	},
 	root: true,
-	ignorePatterns: ['.eslintrc.cjs', 'built'],
+	ignorePatterns: ['.eslintrc.cjs', 'built', 'coverage'],
 	plugins: ['@typescript-eslint'],
 	rules: {
 		indent: ['error', 'tab'],
