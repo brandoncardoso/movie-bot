@@ -82,7 +82,6 @@ export class TmdbMovieProvider implements MovieProvider {
 		case 'Vimeo':
 			return `https://vimeo.com/${trailer.key}`
 		default:
-			console.log('unhandled trailer site:', trailer.site)
 			return null
 		}
 	}

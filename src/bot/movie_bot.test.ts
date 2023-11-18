@@ -6,12 +6,12 @@ import { Repository } from '../common'
 import { TYPES } from '../types'
 import { MovieBot } from './movie_bot'
 import { MockMovieChannelRepository, MovieChannel } from '../movie_channel'
-import { MockMovieProvider, MovieProvider } from '../movie'
+import { MovieInfo, MovieProvider } from '../movie'
 
 describe('movie bot', () => {
 	let bot: MovieBot
-	let mockMovieProvider: MockMovieProvider
 	let mockMovieChannelRepo: MockMovieChannelRepository
+	let mockMovieProvider: MovieProvider
 
 	const mockInteraction = (
 		commandName: string,
@@ -30,7 +30,7 @@ describe('movie bot', () => {
 	beforeEach(() => {
 		container.snapshot()
 
-		mockMovieProvider = new MockMovieProvider()
+		mockMovieProvider = <MovieProvider>{}
 		mockMovieChannelRepo = new MockMovieChannelRepository()
 		container.rebind<MovieProvider>(TYPES.MovieProvider).toConstantValue(mockMovieProvider)
 		container.rebind<Repository<MovieChannel>>(TYPES.MovieChannelRepository).toConstantValue(mockMovieChannelRepo)
@@ -44,14 +44,25 @@ describe('movie bot', () => {
 	})
 
 	describe('movie command', () => {
-		it('should return movie info', async () => {
-			const movieTitle = 'fake movie'
-			const movieInfo = await mockMovieProvider.findMovie(movieTitle)
+		const movie: MovieInfo = {
+			title: 'The Godfather',
+			description: 'A chronicle of the fictional Italian-American Corleone crime family',
+			genres: 'Crime, Drama',
+			releaseDate: '03/14/1972',
+			rating: '87',
+			trailerUrl: 'https://thegodfathertrailer.com',
+			url: 'https://themoviedb.org',
+		}
 
+		beforeEach(() => {
+			mockMovieProvider.findMovie = sinon.stub().resolves(movie)
+		})
+
+		it('should return movie info', async () => {
 			const response = await mockInteraction('movie', {
 				options: {
 					get: () => {
-						return { value: movieTitle }
+						return { value: movie.title }
 					},
 				},
 			})
@@ -60,20 +71,17 @@ describe('movie bot', () => {
 			expect(response.embeds).to.have.lengthOf(1)
 			const embed = response.embeds[0] as unknown as { data: Record<string, unknown> }
 			expect(embed.data).to.have.keys(['title', 'description', 'url', 'image', 'color', 'fields'])
-			expect(embed.data.title).to.equal(movieInfo.title)
-			expect(embed.data.description).to.equal(movieInfo.description)
-			expect(embed.data.url).to.equal(movieInfo.url)
-			expect(embed.data.image).to.equal(movieInfo.posterUrl)
+			expect(embed.data.title).to.equal(movie.title)
+			expect(embed.data.description).to.equal(movie.description)
+			expect(embed.data.url).to.equal(movie.url)
+			expect(embed.data.image).to.equal(movie.posterUrl)
 		})
 
 		it('should return movie info with a trailer button/link', async () => {
-			const movieTitle = 'with trailer'
-			const movieInfo = await mockMovieProvider.findMovie(movieTitle)
-
 			const response = await mockInteraction('movie', {
 				options: {
 					get: () => {
-						return { value: movieTitle }
+						return { value: movie.title }
 					},
 				},
 			})
@@ -81,18 +89,15 @@ describe('movie bot', () => {
 			expect(response.embeds).to.have.lengthOf(1)
 			expect(response.components).to.have.lengthOf(1)
 			const { components } = response.components[0] as unknown as { components: { data: Record<string, unknown> }[] }
-			expect(components).to.have.lengthOf(1)
-			expect(components[0].data.url).to.equal(movieInfo.trailerUrl)
+			const trailerComponent = components.find(({ data }) => data.url === movie.trailerUrl)
+			expect(trailerComponent).to.exist
 		})
 
 		it('should return movie info with a details button/link', async () => {
-			const movieTitle = 'fake movie'
-			const movieInfo = await mockMovieProvider.findMovie(movieTitle)
-
 			const response = await mockInteraction('movie', {
 				options: {
 					get: () => {
-						return { value: movieTitle }
+						return { value: movie.title }
 					},
 				},
 			})
@@ -100,12 +105,12 @@ describe('movie bot', () => {
 			expect(response.embeds).to.have.lengthOf(1)
 			expect(response.components).to.have.lengthOf(1)
 			const { components } = response.components[0] as unknown as { components: { data: Record<string, unknown> }[] }
-			expect(components).to.have.lengthOf(1)
-			expect(components[0].data.url).to.equal(movieInfo.url)
+			const details = components.find(({ data }) => data.url === movie.url)
+			expect(details).to.exist
 		})
 
 		it('should tell user if no movie was found with their query', async () => {
-			sinon.stub(mockMovieProvider, 'findMovie').throws('not found')
+			mockMovieProvider.findMovie = sinon.stub().throws('not found')
 			const movieQuery = 'non-existant movie'
 
 			const response = await mockInteraction('movie', {
@@ -162,17 +167,28 @@ describe('movie bot', () => {
 	describe('upcoming movies', () => {
 		it('should post upcoming movies', async () => {
 			const sendMessage = sinon.stub(bot, 'sendMessageToChannel')
-			const upcomingMovies = await mockMovieProvider.getUpcomingMovies()
+			const movies: MovieInfo[] = [
+				{
+					title: 'The Godfather',
+					description: 'A chronicle of the fictional Italian-American Corleone crime family',
+					genres: 'Crime, Drama',
+					releaseDate: '03/14/1972',
+					rating: '87',
+					url: 'https://themoviedb.org',
+				},
+			]
+
+			mockMovieProvider.getUpcomingMovies = sinon.stub().resolves(movies)
 
 			await bot.subscribeChannel('fake_channel')
 			await bot.postUpcomingMovies()
 
-			expect(sendMessage.callCount).to.equal(upcomingMovies.length)
+			expect(sendMessage.callCount).to.equal(movies.length)
 		})
 
 		it('should not post when there are no upcoming movies', async () => {
 			const sendMessage = sinon.stub(bot, 'sendMessageToChannel')
-			sinon.stub(mockMovieProvider, 'getUpcomingMovies').resolves([])
+			mockMovieProvider.getUpcomingMovies = sinon.stub().resolves([])
 
 			await bot.subscribeChannel('fake_channel')
 			await bot.postUpcomingMovies()
