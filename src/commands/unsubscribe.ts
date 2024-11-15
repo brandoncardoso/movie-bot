@@ -1,4 +1,10 @@
-import { CacheType, CommandInteraction, PermissionFlagsBits, SlashCommandBuilder } from 'discord.js'
+import {
+	CacheType,
+	CommandInteraction,
+	InteractionContextType,
+	PermissionFlagsBits,
+	SlashCommandBuilder,
+} from 'discord.js'
 import { MovieBot } from '../bot/movie_bot.js'
 import { Command } from './types.js'
 
@@ -7,7 +13,7 @@ export const Unsubscribe: Command = {
 		.setName('unsubscribe')
 		.setDescription('Unsubscribes this channel from automatically receiving information about upcoming movies.')
 		.setDefaultMemberPermissions(PermissionFlagsBits.Administrator | PermissionFlagsBits.ManageGuild)
-		.setDMPermission(false),
+		.setContexts([InteractionContextType.Guild]),
 	run: async function (client: MovieBot, interaction: CommandInteraction<CacheType>): Promise<void> {
 		await client.unsubscribeChannel(interaction.channelId)
 		await interaction.reply({
