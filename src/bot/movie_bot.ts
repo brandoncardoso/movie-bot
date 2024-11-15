@@ -10,6 +10,7 @@ import {
 	GatewayIntentBits,
 	Interaction,
 	MessageCreateOptions,
+	TextChannel,
 } from 'discord.js'
 import { inject } from 'inversify'
 import { container } from '../inversify.config.js'
@@ -67,21 +68,28 @@ export class MovieBot extends Client {
 	}
 
 	public async sendMessageToChannel(channelId: string, content: MessageCreateOptions): Promise<void> {
-		const channel = this.channels.cache.get(channelId)
+		const channel = this.channels.cache.get(channelId) as TextChannel
 		if (channel?.isTextBased()) {
-			await channel.send(content)
+			const textChannel = channel as TextChannel
+			await textChannel.send(content)
 		}
 	}
 
 	private registerEvents(): void {
-		this.once(Events.ClientReady, async () => {
-			await this.onReady()
+		this.once(Events.ClientReady, () => {
+			this.onReady().catch((err) => {
+				console.error(err)
+			})
 		})
-		this.on(Events.InteractionCreate, async (interaction: Interaction) => {
-			await this.onInterationCreate(interaction)
+		this.on(Events.InteractionCreate, (interaction: Interaction) => {
+			this.onInterationCreate(interaction).catch((err) => {
+				console.error(err)
+			})
 		})
-		this.on(Events.ChannelDelete, async (channel: Channel) => {
-			await this.onChannelDelete(channel)
+		this.on(Events.ChannelDelete, (channel: Channel) => {
+			this.onChannelDelete(channel).catch((err) => {
+				console.error(err)
+			})
 		})
 	}
 

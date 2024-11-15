@@ -1,4 +1,4 @@
-import { CacheType, CommandInteraction, SlashCommandBuilder } from 'discord.js'
+import { CacheType, CommandInteraction, InteractionContextType, SlashCommandBuilder } from 'discord.js'
 import { MovieBot } from '../bot/movie_bot.js'
 import { Command } from './types.js'
 
@@ -14,7 +14,7 @@ const data = new SlashCommandBuilder()
 	.addStringOption((option) =>
 		option.setName(titleOption.name).setDescription(titleOption.description).setRequired(titleOption.required)
 	)
-	.setDMPermission(true)
+	.setContexts([InteractionContextType.Guild, InteractionContextType.BotDM]) as SlashCommandBuilder
 
 async function run(client: MovieBot, interaction: CommandInteraction<CacheType>): Promise<void> {
 	const movieName = interaction.options.get(titleOption.name).value as string
@@ -30,4 +30,7 @@ async function run(client: MovieBot, interaction: CommandInteraction<CacheType>)
 	}
 }
 
-export const Movie: Command = { data, run }
+export const Movie: Command = {
+	data,
+	run,
+}
