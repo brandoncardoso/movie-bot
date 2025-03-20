@@ -20,7 +20,7 @@
   "author": "Brandon Cardoso",
   "license": "ISC",
   "dependencies": {
-    "discord.js": "^14.16.3",
+    "discord.js": "^14.18.0",
     "dotenv": "^10.0.0",
     "inversify": "^6.0.2",
     "levenshtein": "^1.0.5",
